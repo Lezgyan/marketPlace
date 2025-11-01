@@ -1,0 +1,14 @@
+cluster.name: "docker-cluster"
+network.host: 0.0.0.0
+
+# Настройки для русского языка
+analysis:
+  analyzer:
+    russian:
+      type: custom
+      tokenizer: standard
+      filter: [lowercase, russian_morphology, english_morphology]
+
+# Отключаем security для разработки
+xpack.security.enabled: false
+xpack.security.transport.ssl.enabled: false

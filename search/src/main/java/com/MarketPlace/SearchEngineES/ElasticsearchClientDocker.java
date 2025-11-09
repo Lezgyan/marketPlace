@@ -11,12 +11,14 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.apache.http.HttpHost;
 import org.elasticsearch.client.RestClient;
+import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 import java.io.StringReader;
 import java.util.List;
 import java.util.stream.Collectors;
 
+@Component
 public class ElasticsearchClientDocker {
 
     private final ElasticsearchClient client;

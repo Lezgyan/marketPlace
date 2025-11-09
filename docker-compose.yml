@@ -1,7 +1,7 @@
 services:
   elasticsearch:
     image: elasticsearch:8.11.0
-    container_name: elasticsearch
+    container_name: elasticsearch_market
     environment:
       - discovery.type=single-node
       - xpack.security.enabled=false
@@ -14,7 +14,7 @@ services:
 
   kibana:
     image: kibana:8.11.0
-    container_name: kibana
+    container_name: kibana_market
     environment:
       - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
     ports:

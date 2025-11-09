@@ -2,74 +2,51 @@ package com.MarketPlace.SearchEngineES;
 
 
 import com.MarketPlace.SearchEngineES.dto.Document;
+import com.MarketPlace.SearchEngineES.dto.DtoQuery;
+import jakarta.annotation.PostConstruct;
+import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Scanner;
 
+
+@Service
 public class SearchEngine {
+    private final ElasticsearchClientDocker esClient = new ElasticsearchClientDocker();
+    private final String INDEX_NAME = "search-documents";
 
-    public static void main(String[] args) {
-        ElasticsearchClientDocker esClient = new ElasticsearchClientDocker();
-        Scanner scanner = new Scanner(System.in);
+    public List<Document> getDocumentList(DtoQuery dtoQuery) throws IOException {
+        var a = esClient.search(INDEX_NAME, dtoQuery.query(), dtoQuery.cnt());
+        return a;
+    }
 
-        try {
+    @PostConstruct
+    public void startEngine() throws IOException {
 
-            String indexName = "search-documents";
+        if (!esClient.checkIfIndexExists(INDEX_NAME)) {
+            esClient.createSearchIndex(INDEX_NAME);
 
-            if (!esClient.checkIfIndexExists(indexName)) {
-                esClient.deleteIndex(indexName);
-                esClient.createSearchIndex(indexName);
+            ReadJson readJson = new ReadJson();
 
-                ReadJson readJson = new ReadJson();
+            List<Map<String, Object>> mapList = readJson.readJson();
 
-                List<Map<String, Object>> mapList = readJson.readJson();
+            List<Document> documents = new ArrayList<>();
 
-                List<Document> documents = new ArrayList<>();
+            for (Map<String, Object> item : mapList) {
+                String id = (String) item.get("id");
+                String name = (String) item.get("name");
+                String text = (String) item.get("text");
 
-                Long id = 1L;
+                List<String> tags = (ArrayList<String>) item.get("tags");
 
-                for (Map<String, Object> item : mapList) {
-                    String name = (String) item.get("name");
-                    String text = (String) item.get("text");
-
-                    List<String> tags = (ArrayList<String>) item.get("tags");
-
-                    Document document = new Document(id, text, name, tags.toArray(String[]::new));
-                    documents.add(document);
-                    id++;
-                }
-
-                esClient.bulkIndexDocuments(indexName, documents);
-
-                Thread.sleep(1000);
+                Document document = new Document(id, text, name, tags.toArray(String[]::new));
+                documents.add(document);
             }
 
-            while (true) {
+            esClient.bulkIndexDocuments(INDEX_NAME, documents);
 
-                System.out.println("Введите запрос: ");
-                String q = scanner.nextLine();
-                System.out.println("Введите размер выборки: ");
-                Integer cnt = Integer.parseInt(scanner.nextLine());
-
-                List<Document> results = esClient.search(indexName, q, cnt);
-
-                for (Document document : results) {
-                    System.out.println(document);
-                }
-            }
-
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        } finally {
-            try {
-                esClient.close();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
         }
     }
 }

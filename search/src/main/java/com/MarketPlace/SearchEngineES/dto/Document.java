@@ -1,7 +1,7 @@
 package com.MarketPlace.SearchEngineES.dto;
 
 public class Document {
-    private Long id;
+    private String id;
 
     private String text;
 
@@ -13,14 +13,14 @@ public class Document {
 
     }
 
-    public Document(Long id, String text, String name, String[] tags) {
+    public Document(String id, String text, String name, String[] tags) {
         this.id = id;
         this.text = text;
         this.name = name;
         this.tags = tags;
     }
 
-    public Long getId() {
+    public String getId() {
         return id;
     }
 

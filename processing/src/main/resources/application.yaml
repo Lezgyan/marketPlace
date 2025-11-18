@@ -1,0 +1,22 @@
+version: "3.9"
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/marketplace
+    username: postgres
+    password: postgres
+  session:
+    store-type: none
+
+jwt:
+  secret: "very-secret-key-change-me-1234567890"
+  expiration-ms: 3600000
+
+services:
+  postgres:
+    image: postgres:13.3
+    environment:
+      POSTGRES_DB: "habrdb"
+      POSTGRES_USER: "habrpguser"
+      POSTGRES_PASSWORD: "pgpwd4habr"
+    ports:
+      - "5432:5432"

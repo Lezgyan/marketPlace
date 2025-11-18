@@ -13,7 +13,11 @@ import java.util.Map;
 public class ReadJson {
     ObjectMapper objectMapper = new ObjectMapper();
 
+<<<<<<< HEAD
+    private final static String PATH = "C:\\Users\\ddeni\\Downloads\\anotherM\\marketPlace\\search\\src\\main\\resources\\data\\documents_list.json";
+=======
     private final static String PATH = "E:\\University\\course_4\\ScriptLP\\marketPlace\\search\\src\\main\\resources\\data\\documents_list.json";
+>>>>>>> 0cea0712abe133a0e4f241097fbdb377533295c8
 
     public List<Map<String, Object>> readJson() {
 

@@ -19,6 +19,14 @@
 
     <dependencies>
         <dependency>
+<<<<<<< HEAD
+            <groupId>org.postgresql</groupId>
+            <artifactId>postgresql</artifactId>
+            <scope>runtime</scope>
+        </dependency>
+        <dependency>
+=======
+>>>>>>> 0cea0712abe133a0e4f241097fbdb377533295c8
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-validation</artifactId>
         </dependency>

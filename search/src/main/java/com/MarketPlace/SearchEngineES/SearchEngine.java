@@ -15,11 +15,7 @@ import java.util.Map;
 @Service
 public class SearchEngine {
     private final ElasticsearchClientDocker esClient = new ElasticsearchClientDocker();
-<<<<<<< HEAD
-    private final String INDEX_NAME = "search-documents_smth_smth";
-=======
     private final String INDEX_NAME = "search-documents";
->>>>>>> 0cea0712abe133a0e4f241097fbdb377533295c8
 
     public List<Document> getDocumentList(DtoQuery dtoQuery) throws IOException {
         var a = esClient.search(INDEX_NAME, dtoQuery.query(), dtoQuery.cnt());

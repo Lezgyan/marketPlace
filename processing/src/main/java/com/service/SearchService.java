@@ -1,60 +1,73 @@
 package com.service;
 
+import com.dto.DtoQuery;
 import com.dto.Product;
 import com.dto.ProductSearchResponse;
 import com.dto.SearchDocument;
-import lombok.RequiredArgsConstructor;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import lombok.Getter;
 import lombok.ToString;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.UUID;
 
 @Slf4j
 @Service
-//@RequiredArgsConstructor
 public class SearchService {
+
+    private final JdbcTemplate jdbcTemplate;
+
     private final RestTemplate restTemplate;
 
-//    @Value("${search.service.url:http://localhost:8081}")
     private final String searchServiceUrl = "http://localhost:8085";
 
     @Autowired
-    public SearchService(RestTemplate restTemplate) {
+    private ObjectMapper mapper;
+
+
+    public SearchService(RestTemplate restTemplate, JdbcTemplate jdbcTemplate) {
+        this.jdbcTemplate = jdbcTemplate;
         this.restTemplate = restTemplate;
     }
 
-    public ProductSearchResponse searchProducts(String query, Integer limit) {
+    public ProductSearchResponse searchProducts(DtoQuery dtoQuery) {
         try {
-            int actualLimit = limit != null ? limit : 20;
-            SearchQuery searchQuery = new SearchQuery(query, actualLimit);
 
-            //log.info("Calling search service: {}/search with query: {}", searchServiceUrl, searchQuery);
 
-            // Вызываем search сервис через POST запрос
             ResponseEntity<SearchDocument[]> response =
-                restTemplate.postForEntity(
-                    searchServiceUrl + "/search",
-                    searchQuery,
-                    SearchDocument[].class
-                );
+                    restTemplate.postForEntity(
+                            searchServiceUrl + "/search",
+                            dtoQuery,
+                            SearchDocument[].class
+                    );
 
-            // Преобразуем SearchDocument в Product
-            List<Product> products = Arrays.stream(response.getBody())
-                    .map(this::convertToProduct)
-                    .collect(Collectors.toList());
 
-            ProductSearchResponse searchResponse = new ProductSearchResponse();
-            searchResponse.setItems(products);
+            List<Product> products = new ArrayList<>();
 
-            return searchResponse;
+            List<SearchDocument> documentList = Arrays.asList(response.getBody());
+
+            for (int i = 0; i < documentList.size(); i++) {
+                UUID curId = UUID.fromString(documentList.get(i).getId());
+
+                Product product = getProductById(curId);
+
+                products.add(product);
+            }
+
+            ProductSearchResponse productSearchResponse = new ProductSearchResponse();
+            productSearchResponse.setItems(products);
+            return productSearchResponse;
+
 
         } catch (Exception e) {
             //log.error("Error calling search service", e);
@@ -62,58 +75,41 @@ public class SearchService {
         }
     }
 
-    public Product getProductById(String id) {
+    public Product getProductById(UUID id) {
         try {
-            // Ищем товар по ID через поисковый сервис
-            // Предполагаем, что search сервис может искать по ID
-            SearchQuery searchQuery = new SearchQuery("id:" + id, 1);
+            String sql = "SELECT id, name, raw_data FROM products WHERE id = ?";
 
-            ResponseEntity<SearchDocument[]> response =
-                restTemplate.postForEntity(
-                    searchServiceUrl + "/search",
-                    searchQuery,
-                    SearchDocument[].class
-                );
+            return jdbcTemplate.queryForObject(
+                    sql,
+                    new Object[]{id},
+                    (rs, rowNum) -> {
+                        UUID productId = rs.getObject("id", UUID.class);
+                        String name = rs.getString("name");
 
-            if (response.getBody() != null && response.getBody().length > 0) {
-                return convertToProduct(response.getBody()[0]);
-            } else {
-                throw new RuntimeException("Product not found with id: " + id);
-            }
+                        String rawJson = rs.getString("raw_data");
+
+                        JsonNode rawData = null;
+                        try {
+                            rawData = mapper.readTree(rawJson);
+                        } catch (JsonProcessingException e) {
+                            throw new RuntimeException(e);
+                        }
+
+                        return new Product(productId, name, rawData);
+                    });
+
 
         } catch (Exception e) {
-            //log.error("Error getting product by id: {}", id, e);
             throw new RuntimeException("Product not found", e);
         }
     }
 
-    private Product convertToProduct(SearchDocument document) {
-        Product product = new Product();
-        product.setId(document.getId());
-        product.setName(document.getName());
-        product.setText(document.getText());
-
-        // Генерируем URL на основе ID
-        product.setUrl("/products/" + document.getId());
-
-        // Устанавливаем значения по умолчанию
-        product.setCurrency("RUB");
-        product.setPrice(java.math.BigDecimal.valueOf(0.0));
-
-        // Если в Document есть tags, можно преобразовать в images
-        if (document.getTags() != null && document.getTags().length > 0) {
-            product.setImages(Arrays.asList(document.getTags()));
-        }
-
-        return product;
-    }
-
-    // Вспомогательный класс для запроса к search сервису
     @Getter
     @ToString
     private static class SearchQuery {
         private String query;
         private Integer cnt;
+
         private SearchQuery(String query, Integer limit) {
             this.query = query;
             this.cnt = limit;

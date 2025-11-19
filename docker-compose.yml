@@ -1,7 +1,4 @@
-<<<<<<< HEAD
 version: "3.8"
-=======
->>>>>>> 0cea0712abe133a0e4f241097fbdb377533295c8
 services:
   elasticsearch:
     image: elasticsearch:8.11.0
@@ -25,7 +22,6 @@ services:
       - "5601:5601"
     depends_on:
       - elasticsearch
-<<<<<<< HEAD
   db:
     image: postgres:16
     container_name: marketplace-postgres
@@ -42,8 +38,3 @@ services:
 volumes:
   elastic_data:
   pgdata:
-=======
-
-volumes:
-  elastic_data:
->>>>>>> 0cea0712abe133a0e4f241097fbdb377533295c8

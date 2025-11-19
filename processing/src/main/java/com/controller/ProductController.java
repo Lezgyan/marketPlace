@@ -1,5 +1,6 @@
 package com.controller;
 
+import com.dto.DtoQuery;
 import com.dto.Product;
 import com.dto.ProductSearchResponse;
 import com.service.SearchService;
@@ -11,31 +12,27 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 @RestController
 @RequestMapping("/products")
-//@RequiredArgsConstructor
 public class ProductController {
 
     private final SearchService searchService;
 
-    @Autowired
     public ProductController(SearchService searchService) {
         this.searchService = searchService;
     }
 
-    @GetMapping("/search")
-    public ResponseEntity<?> searchProducts(
-            @RequestParam String q,
-            @RequestParam(required = false, defaultValue = "20")
-            @Min(1) @Max(100) Integer limit) {
+    @PostMapping("/search")
+    public ResponseEntity<?> searchProducts(@RequestBody(required = false) DtoQuery dtoQuery) {
 
-        //throw new RuntimeException("ti lox");
-
-        ProductSearchResponse response = searchService.searchProducts(q, limit);
+        ProductSearchResponse response = searchService.searchProducts(dtoQuery);
         return ResponseEntity.ok(response);
     }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<Product> getProductById(@PathVariable String id) {
-        Product product = searchService.getProductById(id);
-        return ResponseEntity.ok(product);
-    }
+
+    // пока оставлю, нет базы
+
+//    @GetMapping("/{id}")
+//    public ResponseEntity<Product> getProductById(@PathVariable String id) {
+//        Product product = searchService.getProductById(id);
+//        return ResponseEntity.ok(product);
+//    }
 }

@@ -27,12 +27,10 @@ public class ProductController {
         return ResponseEntity.ok(response);
     }
 
+    @GetMapping("/{id}")
+    public ResponseEntity<Product> getProductById(@PathVariable  java.util.UUID id) {
+        Product product = searchService.getProductById(id);
+        return ResponseEntity.ok(product);
+    }
 
-    // пока оставлю, нет базы
-
-//    @GetMapping("/{id}")
-//    public ResponseEntity<Product> getProductById(@PathVariable String id) {
-//        Product product = searchService.getProductById(id);
-//        return ResponseEntity.ok(product);
-//    }
 }

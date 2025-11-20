@@ -2,10 +2,26 @@ import React, { useState } from 'react';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import './App.css';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import SearchPage from './pages/SearchPage';
+import ProductPage from './pages/ProductPage';
 
 type PageType = 'login' | 'register';
 
-function App() {
+const App: React.FC = () => {
+  return (
+    <Router>
+      <Routes>
+        <Route path="/" element={<SearchPage />} />
+        <Route path="/product/:id" element={<ProductPage />} />
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/register" element={<RegisterPage/>} />
+      </Routes>
+    </Router>
+  );
+};
+
+function App1() {
   const [currentPage, setCurrentPage] = useState<PageType>('login');
   const [prefillEmail, setPrefillEmail] = useState<string>('');
 

@@ -191,7 +191,7 @@ const RegisterPage: React.FC<RegisterPageProps> = ({
             {errors.confirmPassword && <span className="error-message">{errors.confirmPassword}</span>}
           </div>
 
-          <div className="form-options">
+        <div className="form-options">
             <label className="checkbox-label">
               <input
                 type="checkbox"

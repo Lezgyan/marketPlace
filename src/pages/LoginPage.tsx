@@ -1,5 +1,6 @@
 import React, { useState, ChangeEvent, FormEvent, useEffect } from 'react';
 import '../styles/LoginPage.css';
+import { useNavigate } from 'react-router-dom';
 
 
 interface LoginPageProps {
@@ -26,6 +27,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onSwitchToRegister, prefillEmail 
   const [errors, setErrors] = useState<LoginErrors>({});
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [successMessage, setSuccessMessage] = useState<string>('');
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (prefillEmail) {
@@ -36,6 +38,9 @@ const LoginPage: React.FC<LoginPageProps> = ({ onSwitchToRegister, prefillEmail 
     }
   }, [prefillEmail]);
 
+  const handleLoginClick = () => {
+    navigate(`/`);
+  };
   const handleChange = (e: ChangeEvent<HTMLInputElement>): void => {
     const { name, value } = e.target;
     setFormData(prev => ({
@@ -78,11 +83,14 @@ const LoginPage: React.FC<LoginPageProps> = ({ onSwitchToRegister, prefillEmail 
     setIsLoading(true);
 
     try {
-      // Имитация API запроса
       await new Promise(resolve => setTimeout(resolve, 1500));
       
       setSuccessMessage('Вход выполнен успешно! Добро пожаловать в агрегатор маркетплейсов!');
       
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      navigate("/");
+
     } catch (error) {
       setErrors({ submit: 'Произошла ошибка при авторизации' });
     } finally {

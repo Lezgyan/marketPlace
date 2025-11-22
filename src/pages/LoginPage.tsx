@@ -1,27 +1,27 @@
 import React, { useState, ChangeEvent, FormEvent, useEffect } from 'react';
 import '../styles/LoginPage.css';
 import { useNavigate } from 'react-router-dom';
-
+import { loginUser } from '../services/LoginService';
 
 interface LoginPageProps {
   onSwitchToRegister: () => void;
-  prefillEmail?: string; 
+  prefillUsername?: string; 
 }
 
 interface LoginFormData {
-  email: string;
+  username: string; 
   password: string;
 }
 
 interface LoginErrors {
-  email?: string;
+  username?: string; 
   password?: string;
   submit?: string;
 }
 
-const LoginPage: React.FC<LoginPageProps> = ({ onSwitchToRegister, prefillEmail = '' }) => {
+const LoginPage: React.FC<LoginPageProps> = ({ onSwitchToRegister, prefillUsername = '' }) => {
   const [formData, setFormData] = useState<LoginFormData>({
-    email: prefillEmail, 
+    username: prefillUsername, 
     password: ''
   });
   const [errors, setErrors] = useState<LoginErrors>({});
@@ -30,17 +30,14 @@ const LoginPage: React.FC<LoginPageProps> = ({ onSwitchToRegister, prefillEmail 
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (prefillEmail) {
+    if (prefillUsername) {
       setFormData(prev => ({
         ...prev,
-        email: prefillEmail
+        username: prefillUsername 
       }));
     }
-  }, [prefillEmail]);
+  }, [prefillUsername]);
 
-  const handleLoginClick = () => {
-    navigate(`/`);
-  };
   const handleChange = (e: ChangeEvent<HTMLInputElement>): void => {
     const { name, value } = e.target;
     setFormData(prev => ({
@@ -59,10 +56,10 @@ const LoginPage: React.FC<LoginPageProps> = ({ onSwitchToRegister, prefillEmail 
   const validateForm = (): boolean => {
     const newErrors: LoginErrors = {};
 
-    if (!formData.email.trim()) {
-      newErrors.email = 'Email обязателен';
-    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      newErrors.email = 'Некорректный формат email';
+    if (!formData.username.trim()) {
+      newErrors.username = 'Имя пользователя обязательно';
+    } else if (formData.username.length < 3) {
+      newErrors.username = 'Имя пользователя должно содержать минимум 3 символа';
     }
 
     if (!formData.password) {
@@ -83,16 +80,41 @@ const LoginPage: React.FC<LoginPageProps> = ({ onSwitchToRegister, prefillEmail 
     setIsLoading(true);
 
     try {
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
+      const response = await loginUser({
+        username: formData.username,
+        password: formData.password
+      });
+
+      // Сохраняем токен и данные пользователя
+      if (response.token) {
+        localStorage.setItem('authToken', response.token);
+        localStorage.setItem('username', formData.username); 
+        
+        if (response.user) {
+          localStorage.setItem('userData', JSON.stringify(response.user));
+        }
+      }
+
       setSuccessMessage('Вход выполнен успешно! Добро пожаловать в агрегатор маркетплейсов!');
+
+      setTimeout(() => {
+        navigate("/");
+      }, 1000);
+
+    } catch (error: any) {
+      let errorMessage = 'Произошла ошибка при авторизации';
       
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
-      navigate("/");
-
-    } catch (error) {
-      setErrors({ submit: 'Произошла ошибка при авторизации' });
+      if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error.response?.status === 403) {
+        errorMessage = 'Неверное имя пользователя или пароль'; 
+      } else if (error.response?.status === 404) {
+        errorMessage = 'Пользователь не найден';
+      } else if (error.code === 'NETWORK_ERROR') {
+        errorMessage = 'Ошибка соединения с сервером';
+      }
+      
+      setErrors({ submit: errorMessage });
     } finally {
       setIsLoading(false);
     }
@@ -125,17 +147,17 @@ const LoginPage: React.FC<LoginPageProps> = ({ onSwitchToRegister, prefillEmail 
           )}
 
           <div className="form-group">
-            <label htmlFor="email">Email</label>
+            <label htmlFor="username">Имя пользователя</label> 
             <input
-              type="email"
-              id="email"
-              name="email"
-              value={formData.email}
+              type="text" 
+              id="username"
+              name="username"
+              value={formData.username}
               onChange={handleChange}
-              className={errors.email ? 'error' : ''}
-              placeholder="your@email.com"
+              className={errors.username ? 'error' : ''}
+              placeholder="Ваше имя пользователя"
             />
-            {errors.email && <span className="error-message">{errors.email}</span>}
+            {errors.username && <span className="error-message">{errors.username}</span>}
           </div>
 
           <div className="form-group">

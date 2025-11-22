@@ -93,7 +93,17 @@ const SearchPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [products] = useState<Product[]>(mockProducts);
   const [filteredProducts, setFilteredProducts] = useState<Product[]>(mockProducts);
+  const [username, setUsername] = useState<string | null>(null);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const token = localStorage.getItem('authToken');
+    const savedUsername = localStorage.getItem('username');
+    
+    if (token && savedUsername) {
+      setUsername(savedUsername);
+    }
+  }, []);
 
   useEffect(() => {
     const results = products.filter(product =>
@@ -110,23 +120,59 @@ const SearchPage: React.FC = () => {
     navigate(`/login`);
   };
 
+  const handleLogout = () => {
+
+    localStorage.removeItem('authToken');
+    localStorage.removeItem('username');
+    localStorage.removeItem('userData');
+    setUsername(null);
+
+    navigate('/login');
+  };
+
   return (
     <div style={{ padding: '20px', maxWidth: '1200px', margin: '0 auto' }}>
-       <button 
-        onClick={handleLoginClick}
-        style={{
-          padding: '8px 16px',
-          marginBottom: '20px',
-          backgroundColor: '#2652e4ff',
-          border: '1px solid #ddd',
-          borderRadius: '4px',
-          cursor: 'pointer',
-          float: 'right',
-          color: 'white'
-        }}>
-        
-        Вход
-      </button>
+      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '20px' }}>
+        {username ? (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <span style={{ 
+              padding: '8px 16px',
+              backgroundColor: '#f0f0f0',
+              borderRadius: '4px',
+              border: '1px solid #ddd'
+            }}>
+              👤 {username}
+            </span>
+            <button 
+              onClick={handleLogout}
+              style={{
+                padding: '8px 16px',
+                backgroundColor: '#ff4444',
+                color: 'white',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: 'pointer'
+              }}
+            >
+              Выйти
+            </button>
+          </div>
+        ) : (
+          <button 
+            onClick={handleLoginClick}
+            style={{
+              padding: '8px 16px',
+              backgroundColor: '#2652e4',
+              color: 'white',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: 'pointer'
+            }}
+          >
+            Вход
+          </button>
+        )}
+      </div>
 
       <h1 style={{ textAlign: 'center', marginBottom: '30px' }}>Поиск товаров</h1>
       

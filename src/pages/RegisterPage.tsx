@@ -1,5 +1,6 @@
 import React, { useState, ChangeEvent, FormEvent } from 'react';
 import '../styles/LoginPage.css';
+import { registerUser } from '../services/RegisterService'; 
 
 interface RegisterPageProps {
   onSwitchToLogin: () => void;
@@ -7,7 +8,7 @@ interface RegisterPageProps {
 }
 
 interface RegisterFormData {
-  name: string;
+  username: string; 
   email: string;
   password: string;
   confirmPassword: string;
@@ -15,7 +16,7 @@ interface RegisterFormData {
 }
 
 interface RegisterErrors {
-  name?: string;
+  username?: string;
   email?: string;
   password?: string;
   confirmPassword?: string;
@@ -28,7 +29,7 @@ const RegisterPage: React.FC<RegisterPageProps> = ({
   onRegistrationSuccess 
 }) => {
   const [formData, setFormData] = useState<RegisterFormData>({
-    name: '',
+    username: '',
     email: '',
     password: '',
     confirmPassword: '',
@@ -45,7 +46,6 @@ const RegisterPage: React.FC<RegisterPageProps> = ({
       [name]: type === 'checkbox' ? checked : value
     }));
 
-
     if (errors[name as keyof RegisterErrors]) {
       setErrors(prev => ({
         ...prev,
@@ -57,8 +57,10 @@ const RegisterPage: React.FC<RegisterPageProps> = ({
   const validateForm = (): boolean => {
     const newErrors: RegisterErrors = {};
 
-    if (!formData.name.trim()) {
-      newErrors.name = 'Имя обязательно';
+    if (!formData.username.trim()) {
+      newErrors.username = 'Имя пользователя обязательно';
+    } else if (formData.username.length < 2) {
+      newErrors.username = 'Имя пользователя должно содержать минимум 2 символа';
     }
 
     if (!formData.email) {
@@ -93,17 +95,30 @@ const RegisterPage: React.FC<RegisterPageProps> = ({
     setIsLoading(true);
 
     try {
-      // Имитация API запроса
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
+      const response = await registerUser({
+        username: formData.username,
+        email: formData.email,
+        password: formData.password
+      });
+
       setSuccessMessage('Регистрация прошла успешно! Вы будете перенаправлены на страницу входа');
-      
+
       setTimeout(() => {
         onRegistrationSuccess(formData.email);
-      }, 3000);
+      }, 2000);
       
-    } catch (error) {
-      setErrors({ submit: 'Произошла ошибка при регистрации' });
+    } catch (error: any) {
+      let errorMessage = 'Произошла ошибка при регистрации';
+      
+      if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error.response?.status === 409) {
+        errorMessage = 'Пользователь с таким email уже существует';
+      } else if (error.response?.status === 400) {
+        errorMessage = 'Некорректные данные для регистрации';
+      }
+      
+      setErrors({ submit: errorMessage });
     } finally {
       setIsLoading(false);
     }
@@ -136,17 +151,17 @@ const RegisterPage: React.FC<RegisterPageProps> = ({
           )}
 
           <div className="form-group">
-            <label htmlFor="name">Имя</label>
+            <label htmlFor="username">Имя пользователя</label>
             <input
               type="text"
-              id="name"
-              name="name"
-              value={formData.name}
+              id="username"
+              name="username"
+              value={formData.username}
               onChange={handleChange}
-              className={errors.name ? 'error' : ''}
-              placeholder="Ваше имя"
+              className={errors.username ? 'error' : ''}
+              placeholder="Ваше имя пользователя"
             />
-            {errors.name && <span className="error-message">{errors.name}</span>}
+            {errors.username && <span className="error-message">{errors.username}</span>}
           </div>
 
           <div className="form-group">
@@ -191,7 +206,7 @@ const RegisterPage: React.FC<RegisterPageProps> = ({
             {errors.confirmPassword && <span className="error-message">{errors.confirmPassword}</span>}
           </div>
 
-        <div className="form-options">
+          <div className="form-options">
             <label className="checkbox-label">
               <input
                 type="checkbox"

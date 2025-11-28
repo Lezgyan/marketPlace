@@ -1,6 +1,35 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ProductCardProps, Product, mockProducts } from './Product.tsx';
+import { ProductCardProps, Product} from './Product.tsx';
+
+const useProductSearch = () => {
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(false);
+  
+  const searchProducts = async (query: string, cnt: number = 10) => {
+    setLoading(true);
+    try {
+      const response = await fetch('http://localhost:8080/products/search', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ query, cnt })
+      });
+      
+      const data = await response.json();
+      
+      setProducts(data.items || data || []);
+      
+    } catch (error) {
+      console.error('Search error:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  return { products, searchProducts, loading };
+};
 
 const ProductCard: React.FC<ProductCardProps> = ({ product, onProductClick }) => {
   const [imageError, setImageError] = useState(false);
@@ -8,6 +37,8 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onProductClick }) =>
   const handleClick = () => {
     onProductClick(product);
   };
+
+  const productData = product.dataRow;
 
   return (
     <div 
@@ -43,9 +74,10 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onProductClick }) =>
         marginBottom: '12px',
         overflow: 'hidden'
       }}>
-        {!imageError ? (
+        {!imageError && productData.picture_urls && productData.picture_urls[0] ? (
           <img 
-            src={product.imageUrl} 
+            src={productData.picture_urls[0]} 
+            alt={productData.name}
             style={{
               maxWidth: '100%',
               maxHeight: '100%',
@@ -75,7 +107,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onProductClick }) =>
         textAlign: 'center',
         minHeight: '40px'
       }}>
-        {product.name}
+        {productData.name}
       </h3>
       <p style={{ 
         fontSize: '18px', 
@@ -83,7 +115,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onProductClick }) =>
         color: '#2c5aa0',
         margin: '0'
       }}>
-        {product.price.toLocaleString('ru-RU')} ₽
+        {productData.price?.toLocaleString('ru-RU')} {productData.currency || '₽'}
       </p>
     </div>
   );
@@ -91,10 +123,9 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onProductClick }) =>
 
 const SearchPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState<string>('');
-  const [products] = useState<Product[]>(mockProducts);
-  const [filteredProducts, setFilteredProducts] = useState<Product[]>(mockProducts);
   const [username, setUsername] = useState<string | null>(null);
   const navigate = useNavigate();
+  const { products, searchProducts, loading } = useProductSearch();
 
   useEffect(() => {
     const token = localStorage.getItem('authToken');
@@ -106,11 +137,19 @@ const SearchPage: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    const results = products.filter(product =>
-      product.name.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-    setFilteredProducts(results);
-  }, [searchTerm, products]);
+    const timerId = setTimeout(() => {
+      if (searchTerm.trim()) {
+        searchProducts(searchTerm, 10);
+      } else {
+        // Если поисковая строка пустая, очищаем результаты
+        // Или можете загрузить популярные товары
+      }
+    }, 500); // Задержка 500ms
+
+    return () => {
+      clearTimeout(timerId);
+    };
+  }, [searchTerm, searchProducts]);
 
   const handleProductClick = (product: Product) => {
     navigate(`/product/${product.id}`);
@@ -121,12 +160,10 @@ const SearchPage: React.FC = () => {
   };
 
   const handleLogout = () => {
-
     localStorage.removeItem('authToken');
     localStorage.removeItem('username');
     localStorage.removeItem('userData');
     setUsername(null);
-
     navigate('/login');
   };
 
@@ -195,14 +232,16 @@ const SearchPage: React.FC = () => {
         }}
       />
 
+      {loading && <p style={{ textAlign: 'center' }}>Загрузка...</p>}
+
       <div style={{
         display: 'flex',
         flexWrap: 'wrap',
         justifyContent: 'center',
         gap: '15px'
       }}>
-        {filteredProducts.length > 0 ? (
-          filteredProducts.map(product => (
+        {!loading && products.length > 0 ? (
+          products.map(product => (
             <ProductCard 
               key={product.id} 
               product={product} 
@@ -210,7 +249,7 @@ const SearchPage: React.FC = () => {
             />
           ))
         ) : (
-          <p style={{ textAlign: 'center', width: '100%' }}>Товары не найдены ( - _ - )</p>
+          !loading && <p style={{ textAlign: 'center', width: '100%' }}>Товары не найдены ( - _ - )</p>
         )}
       </div>
     </div>

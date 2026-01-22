@@ -43,7 +43,6 @@ public class SearchService {
     public ProductSearchResponse searchProducts(DtoQuery dtoQuery) {
         try {
 
-
             ResponseEntity<SearchDocument[]> response =
                     restTemplate.postForEntity(
                             searchServiceUrl + "/search",

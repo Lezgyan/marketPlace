@@ -16,13 +16,13 @@ public class Product {
 
     private String name;
 
+    private JsonNode dataRow;
+
     public Product(UUID id, String name, JsonNode dataRow) {
         this.id = id;
         this.name = name;
         this.dataRow = dataRow;
     }
-
-    private JsonNode dataRow;
 
 
 

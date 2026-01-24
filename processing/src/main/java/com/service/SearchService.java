@@ -7,6 +7,7 @@ import com.dto.SearchDocument;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.repository.ProductDao;
 import lombok.extern.slf4j.Slf4j;
 import lombok.Getter;
 import lombok.ToString;
@@ -25,18 +26,15 @@ import java.util.UUID;
 @Service
 public class SearchService {
 
-    private final JdbcTemplate jdbcTemplate;
+
+    private final ProductDao productDao;
 
     private final RestTemplate restTemplate;
 
     private final String searchServiceUrl = "http://localhost:8085";
 
-    @Autowired
-    private ObjectMapper mapper;
-
-
-    public SearchService(RestTemplate restTemplate, JdbcTemplate jdbcTemplate) {
-        this.jdbcTemplate = jdbcTemplate;
+    public SearchService(ProductDao productDao, RestTemplate restTemplate) {
+        this.productDao = productDao;
         this.restTemplate = restTemplate;
     }
 
@@ -58,7 +56,7 @@ public class SearchService {
             for (int i = 0; i < documentList.size(); i++) {
                 UUID curId = UUID.fromString(documentList.get(i).getId());
 
-                Product product = getProductById(curId);
+                Product product = productDao.getProductById(curId);
 
                 products.add(product);
             }
@@ -67,51 +65,16 @@ public class SearchService {
             productSearchResponse.setItems(products);
             return productSearchResponse;
 
-
         } catch (Exception e) {
             //log.error("Error calling search service", e);
             throw new RuntimeException("Search service unavailable", e);
         }
     }
 
-    public Product getProductById(UUID id) {
-        try {
-            String sql = "SELECT id, name, raw_data FROM products WHERE id = ?";
-
-            return jdbcTemplate.queryForObject(
-                    sql,
-                    new Object[]{id},
-                    (rs, rowNum) -> {
-                        UUID productId = rs.getObject("id", UUID.class);
-                        String name = rs.getString("name");
-
-                        String rawJson = rs.getString("raw_data");
-
-                        JsonNode rawData = null;
-                        try {
-                            rawData = mapper.readTree(rawJson);
-                        } catch (JsonProcessingException e) {
-                            throw new RuntimeException(e);
-                        }
-
-                        return new Product(productId, name, rawData);
-                    });
-
-
-        } catch (Exception e) {
-            throw new RuntimeException("Product not found", e);
-        }
+    public Product searchProductById(UUID id){
+        return productDao.getProductById(id);
     }
 
-    @Getter
-    @ToString
-    private static class SearchQuery {
-        private String query;
-        private Integer cnt;
 
-        private SearchQuery(String query, Integer limit) {
-            this.query = query;
-            this.cnt = limit;
-        }
-    }
+
 }

@@ -31,15 +31,22 @@ public class SearchService {
 
     private final RestTemplate restTemplate;
 
+    private final DBProducts dbProducts;
+
     private final String searchServiceUrl = "http://localhost:8085";
 
-    public SearchService(ProductDao productDao, RestTemplate restTemplate) {
+    public SearchService(ProductDao productDao, RestTemplate restTemplate, DBProducts dbProducts) {
         this.productDao = productDao;
         this.restTemplate = restTemplate;
+        this.dbProducts = dbProducts;
     }
 
     public ProductSearchResponse searchProducts(DtoQuery dtoQuery) {
         try {
+
+            if (productDao.isTableEmpty()){
+                dbProducts.importProducts();
+            }
 
             ResponseEntity<SearchDocument[]> response =
                     restTemplate.postForEntity(

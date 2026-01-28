@@ -65,4 +65,10 @@ public class ProductDao {
         return jdbcTemplate.queryForObject(sql, new ProductMapper(), offset);
     }
 
+    public Boolean isTableEmpty(){
+        String sql = "select count(*) from products";
+
+        return Integer.valueOf(0).equals(jdbcTemplate.queryForObject(sql, Integer.class));
+    }
+
 }

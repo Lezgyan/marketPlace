@@ -15,10 +15,15 @@ import java.util.Map;
 @Service
 public class SearchEngine {
     private final ElasticsearchClientDocker esClient = new ElasticsearchClientDocker();
-    private final String INDEX_NAME = "search-documents";
+    private final String INDEX_NAME = "test-twenty-seven-search-documents-with-filters";
 
     public List<Document> getDocumentList(DtoQuery dtoQuery) throws IOException {
-        var a = esClient.search(INDEX_NAME, dtoQuery.query(), dtoQuery.cnt());
+        List<Document> a = new ArrayList<>();
+        try {
+            a = esClient.search(INDEX_NAME, dtoQuery.query(), dtoQuery.cnt(), dtoQuery.payload());
+        } catch (Exception e){
+            e.printStackTrace();
+        }
         return a;
     }
 
@@ -36,14 +41,18 @@ public class SearchEngine {
 
             for (Map<String, Object> item : mapList) {
                 String id = (String) item.get("id");
+
                 String name = (String) item.get("name");
+
                 String text = (String) item.get("text");
 
                 List<String> tags = (ArrayList<String>) item.get("tags");
 
-                Document document = new Document(id, text, name, tags.toArray(String[]::new));
+
+                Document document = new Document(id, text, name, tags.toArray(String[]::new), item);
                 documents.add(document);
             }
+            System.out.println("Start build index");
 
             esClient.bulkIndexDocuments(INDEX_NAME, documents);
 

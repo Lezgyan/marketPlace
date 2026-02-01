@@ -1,5 +1,7 @@
 package com.MarketPlace.SearchEngineES.dto;
 
+import java.util.Map;
+
 public class Document {
     private String id;
 
@@ -9,21 +11,27 @@ public class Document {
 
     private String[] tags;
 
+    private Map<String, Object> payload;
+
     public Document() {
 
     }
 
-    public Document(String id, String text, String name, String[] tags) {
+    public Document(String id, String text, String name, String[] tags, Map<String, Object> payload) {
         this.id = id;
         this.text = text;
         this.name = name;
         this.tags = tags;
+        this.payload = payload;
     }
 
     public String getId() {
         return id;
     }
 
+    public Map<String, Object> getPayload() {
+        return payload;
+    }
 
     public String getName() {
         return this.name;

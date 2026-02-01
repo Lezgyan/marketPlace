@@ -4,16 +4,10 @@ import com.dto.DtoQuery;
 import com.dto.Product;
 import com.dto.ProductSearchResponse;
 import com.dto.SearchDocument;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.repository.ProductDao;
+import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
-import lombok.Getter;
-import lombok.ToString;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
@@ -33,7 +27,7 @@ public class SearchService {
 
     private final DBProducts dbProducts;
 
-    private final String searchServiceUrl = "http://localhost:8085";
+    private final String SEARCH_SERVICE_URL = "http://localhost:8085";
 
     public SearchService(ProductDao productDao, RestTemplate restTemplate, DBProducts dbProducts) {
         this.productDao = productDao;
@@ -41,16 +35,19 @@ public class SearchService {
         this.dbProducts = dbProducts;
     }
 
+    @PostConstruct
+    public void prepareDB() throws Exception {
+        if (productDao.isTableEmpty()){
+            dbProducts.importProducts();
+        }
+    }
+
     public ProductSearchResponse searchProducts(DtoQuery dtoQuery) {
         try {
 
-            if (productDao.isTableEmpty()){
-                dbProducts.importProducts();
-            }
-
             ResponseEntity<SearchDocument[]> response =
                     restTemplate.postForEntity(
-                            searchServiceUrl + "/search",
+                            SEARCH_SERVICE_URL + "/search",
                             dtoQuery,
                             SearchDocument[].class
                     );
@@ -81,7 +78,4 @@ public class SearchService {
     public Product searchProductById(UUID id){
         return productDao.getProductById(id);
     }
-
-
-
 }

@@ -2,6 +2,7 @@ package com.MarketPlace.SearchEngineES;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch.core.*;
+import co.elastic.clients.elasticsearch.core.search.Hit;
 import co.elastic.clients.elasticsearch.indices.*;
 import co.elastic.clients.json.jackson.JacksonJsonpMapper;
 import co.elastic.clients.transport.ElasticsearchTransport;
@@ -15,7 +16,7 @@ import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 import java.io.StringReader;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Component
@@ -42,82 +43,225 @@ public class ElasticsearchClientDocker {
 
 
     public void createSearchIndex(String indexName) throws IOException {
-        String settingsSearch = """
-                {
-                  "settings": {
+
+        String settingsSearch =
+                        """
+            {
+                "settings": {
                     "index": {
-                      "mapping": {
-                        "total_fields": {
-                          "limit": 10000
+                        "mapping": {
+                            "total_fields": {
+                                "limit": 10000
+                            }
                         }
-                      }
                     },
                     "analysis": {
-                      "filter": {
-                        "ru_stopwords": {
-                          "type": "stop",
-                          "stopwords": "а,без,более,бы,был,была,были,было,быть,в,вам,вас,весь,во,вот,все,всего,всех,вы,где,да,даже,для,до,его,ее,если,есть,еще,же,за,здесь,и,из,или,им,их,к,как,ко,когда,кто,ли,либо,мне,может,мы,на,надо,наш,не,него,нее,нет,ни,них,но,ну,о,об,однако,он,она,они,оно,от,очень,по,под,при,с,со,так,также,такой,там,те,тем,то,того,тоже,той,только,том,ты,у,уже,хотя,чего,чей,чем,что,чтобы,чье,чья,эта,эти,это,я,a,an,and,are,as,at,be,but,by,for,if,in,into,is,it,no,not,of,on,or,such,that,the,their,then,there,these,they,this,to,was,will,with"
+                        "filter": {
+                            "ru_stopwords": {
+                                "type": "stop",
+                                "stopwords": [
+                                    "а",
+                                    "без",
+                                    "более",
+                                    "бы",
+                                    "был",
+                                    "была",
+                                    "были",
+                                    "было",
+                                    "быть",
+                                    "в",
+                                    "вам",
+                                    "вас",
+                                    "весь",
+                                    "во",
+                                    "вот",
+                                    "все",
+                                    "всего",
+                                    "всех",
+                                    "вы",
+                                    "где",
+                                    "да",
+                                    "даже",
+                                    "для",
+                                    "до",
+                                    "его",
+                                    "ее",
+                                    "если",
+                                    "есть",
+                                    "еще",
+                                    "же",
+                                    "за",
+                                    "здесь",
+                                    "и",
+                                    "из",
+                                    "или",
+                                    "им",
+                                    "их",
+                                    "к",
+                                    "как",
+                                    "ко",
+                                    "когда",
+                                    "кто",
+                                    "ли",
+                                    "либо",
+                                    "мне",
+                                    "может",
+                                    "мы",
+                                    "на",
+                                    "надо",
+                                    "наш",
+                                    "не",
+                                    "него",
+                                    "нее",
+                                    "нет",
+                                    "ни",
+                                    "них",
+                                    "но",
+                                    "ну",
+                                    "о",
+                                    "об",
+                                    "однако",
+                                    "он",
+                                    "она",
+                                    "они",
+                                    "оно",
+                                    "от",
+                                    "очень",
+                                    "по",
+                                    "под",
+                                    "при",
+                                    "с",
+                                    "со",
+                                    "так",
+                                    "также",
+                                    "такой",
+                                    "там",
+                                    "те",
+                                    "тем",
+                                    "то",
+                                    "того",
+                                    "тоже",
+                                    "той",
+                                    "только",
+                                    "том",
+                                    "ты",
+                                    "у",
+                                    "уже",
+                                    "хотя",
+                                    "чего",
+                                    "чей",
+                                    "чем",
+                                    "что",
+                                    "чтобы",
+                                    "чье",
+                                    "чья",
+                                    "эта",
+                                    "эти",
+                                    "это",
+                                    "я",
+                                    "a",
+                                    "an",
+                                    "and",
+                                    "are",
+                                    "as",
+                                    "at",
+                                    "be",
+                                    "but",
+                                    "by",
+                                    "for",
+                                    "if",
+                                    "in",
+                                    "into",
+                                    "is",
+                                    "it",
+                                    "no",
+                                    "not",
+                                    "of",
+                                    "on",
+                                    "or",
+                                    "such",
+                                    "that",
+                                    "the",
+                                    "their",
+                                    "then",
+                                    "there",
+                                    "these",
+                                    "they",
+                                    "this",
+                                    "to",
+                                    "was",
+                                    "will",
+                                    "with"
+                                ]
+                            },
+                            "search_synonym": {
+                                "type": "synonym_graph",
+                                "lenient": true,
+                                "synonyms_path": "analysis/synonyms.txt"
+                            },
+                            "russian_morphology": {
+                                "type": "stemmer",
+                                "language": "russian"
+                            }
                         },
-                        "search_synonym": {
-                          "type": "synonym",
-                          "synonyms_path": "analysis/synonyms.txt"
-                        },
-                        "russian_morphology": {
-                          "type": "stemmer",
-                          "language": "russian"
+                        "analyzer": {
+                            "my_search_analyzer": {
+                                "type": "custom",
+                                "tokenizer": "standard",
+                                "filter": [
+                                    "lowercase",
+                                    "ru_stopwords",
+                                    "search_synonym",
+                                    "russian_morphology"
+                                ]
+                            }
                         }
-                      },
-                      "analyzer": {
-                        "my_search_analyzer": {
-                          "type": "custom",
-                          "tokenizer": "standard",
-                          "filter": [
-                            "lowercase",
-                            "ru_stopwords",
-                            "search_synonym",
-                            "russian_morphology"
-                          ]
-                        }
-                      }
                     }
-                  },
-                  "mappings": {
+                },
+                "mappings": {
                     "properties": {
-                      "name": {
-                        "type": "text",
-                        "analyzer": "my_search_analyzer",
-                        "fields": {
-                          "keyword": {
+                        "payload": {
+                            "type": "flattened"
+                        },
+                        "name": {
+                            "type": "text",
+                            "analyzer": "my_search_analyzer",
+                            "fields": {
+                                "keyword": {
+                                    "type": "keyword"
+                                }
+                            }
+                        },
+                        "price": {
+                            "type": "float"
+                        },
+                        "text": {
+                            "type": "text",
+                            "analyzer": "my_search_analyzer"
+                        },
+                        "tags": {
                             "type": "keyword"
-                          }
                         }
-                      },
-                      "price": {
-                        "type": "float"
-                      },
-                      "text": {
-                        "type": "text",
-                        "analyzer": "my_search_analyzer"
-                      },
-                      "tags": {
-                        "type" : "keyword"
-                      }
                     }
-                  }
                 }
-                
-                """;
+            }
+        """;
+        try {
+            CreateIndexRequest request = CreateIndexRequest.of(b -> b
+                    .index(indexName)
+                    .withJson(new StringReader(settingsSearch))
+            );
 
-        CreateIndexRequest request = CreateIndexRequest.of(b -> b
-                .index(indexName)
-                .withJson(new StringReader(settingsSearch))
-        );
+            client.indices().create(request);
+        } catch (Exception e){
+            e.printStackTrace();
+            System.out.println(e);
+        }
 
-        client.indices().create(request);
     }
 
-    public List<Document> search(String indexName, String query, Integer cnt) throws IOException {
-        SearchResponse<Document> response = client.search(s -> s
+    public List<Document> search(String indexName, String query, Integer cnt, Map<String, Object> payload) throws IOException {
+        var response = client.search(s -> s
                         .index(indexName)
                         .from(0)
                         .size(cnt)
@@ -136,6 +280,20 @@ public class ElasticsearchClientDocker {
                                             );
                                         }
                                     }
+
+                                    if (payload != null && !payload.isEmpty()) {
+                                        for (var e : payload.entrySet()) {
+                                            String key = e.getKey();
+                                            String value = Objects.toString(e.getValue(), null);
+                                            if (key == null || key.isBlank() || value == null) continue;
+
+                                            b.filter(f -> f.simpleQueryString(sqs -> sqs
+                                                    .fields("payload")
+                                                    .query(key + ":\"" + value + "\"")
+                                            ));
+                                        }
+                                    }
+
                                     return b;
                                 })
                         ),
@@ -143,7 +301,8 @@ public class ElasticsearchClientDocker {
         );
 
         return response.hits().hits().stream()
-                .map(hit -> hit.source())
+                .map(Hit::source)
+                .filter(Objects::nonNull)
                 .collect(Collectors.toList());
     }
 
@@ -170,7 +329,7 @@ public class ElasticsearchClientDocker {
             BulkResponse response = client.bulk(br.build());
 
             if (response.errors()) {
-                System.err.println("Ошибки в батче " + (i/BATCH_SIZE + 1) + ":");
+                System.err.println("Ошибки в батче " + (i / BATCH_SIZE + 1) + ":");
             }
 
 

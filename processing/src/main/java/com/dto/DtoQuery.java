@@ -4,7 +4,9 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import lombok.Builder;
+
+import java.util.HashMap;
+import java.util.Map;
 
 @Valid
 public record DtoQuery(
@@ -13,6 +15,8 @@ public record DtoQuery(
 
         @Min(1)
         @NotNull
-        Integer cnt
+        Integer cnt,
+
+        Map<String, Object> payload
 ) {
 }

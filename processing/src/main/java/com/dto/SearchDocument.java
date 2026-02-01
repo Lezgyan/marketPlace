@@ -8,8 +8,8 @@ public class SearchDocument {
     private String text;
     private String name;
     private String[] tags;
-    
-    // Конструкторы
+
+
     public SearchDocument() {}
     
     public SearchDocument(String id, String text, String name, String[] tags) {

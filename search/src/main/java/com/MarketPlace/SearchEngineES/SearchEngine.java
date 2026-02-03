@@ -20,8 +20,8 @@ public class SearchEngine {
     public List<Document> getDocumentList(DtoQuery dtoQuery) throws IOException {
         List<Document> a = new ArrayList<>();
         try {
-            a = esClient.search(INDEX_NAME, dtoQuery.query(), dtoQuery.cnt(), dtoQuery.payload());
-        } catch (Exception e){
+            a = esClient.search(INDEX_NAME, dtoQuery.query(), dtoQuery.payload());
+        } catch (Exception e) {
             e.printStackTrace();
         }
         return a;

@@ -24,6 +24,8 @@ public class ElasticsearchClientDocker {
 
     private final ElasticsearchClient client;
 
+    private final int CNT_PRODUCTS = Integer.MAX_VALUE;
+
     public ElasticsearchClientDocker() {
         RestClient restClient = RestClient.builder(
                 new HttpHost("localhost", 9200, "http")
@@ -260,11 +262,11 @@ public class ElasticsearchClientDocker {
 
     }
 
-    public List<Document> search(String indexName, String query, Integer cnt, Map<String, Object> payload) throws IOException {
+    public List<Document> search(String indexName, String query, Map<String, Object> payload) throws IOException {
         var response = client.search(s -> s
                         .index(indexName)
                         .from(0)
-                        .size(cnt)
+                        .size(5000)
                         .query(q -> q
                                 .bool(b -> {
                                     String[] words = query.split("\\s+");

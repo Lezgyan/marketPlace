@@ -13,9 +13,17 @@ public record DtoQuery(
         @NotBlank
         String query,
 
-        @Min(1)
+//        @Min(1)
+//        @NotNull
+//        Integer cnt,
+
+        @Min(0)
         @NotNull
-        Integer cnt,
+        Integer numberOfPage,
+
+//        @Min(1)
+//        @NotNull
+//        Integer countOfProductsOnPage,
 
         Map<String, Object> payload
 ) {

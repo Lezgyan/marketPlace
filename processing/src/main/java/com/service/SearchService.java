@@ -27,6 +27,8 @@ public class SearchService {
 
     private final String SEARCH_SERVICE_URL = "http://localhost:8085";
 
+    private final Integer COUNT_PRODUCTS_PAGE  = 20;
+
     private final ObjectMapper objectMapper;
 
     public SearchService(ProductDao productDao, RestTemplate restTemplate, DBProducts dbProducts, RedisStorageService redisStorageService, ObjectMapper objectMapper) {
@@ -89,7 +91,7 @@ public class SearchService {
 
             List<Product> products = new ArrayList<>();
 
-            for (int i = 0; i < listIds.size(); i++) {
+            for (int i = COUNT_PRODUCTS_PAGE * dtoQuery.numberOfPage(); i < Math.min(listIds.size(), COUNT_PRODUCTS_PAGE * (dtoQuery.numberOfPage() + 1)); i++) {
                 UUID curId = UUID.fromString(listIds.get(i));
 
                 Product product = productDao.getProductById(curId);

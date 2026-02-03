@@ -1,9 +1,8 @@
 package com.service;
 
-import com.dto.DtoQuery;
-import com.dto.Product;
-import com.dto.ProductSearchResponse;
-import com.dto.SearchDocument;
+import com.dto.*;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.repository.ProductDao;
 import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
@@ -11,10 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 @Slf4j
 @Service
@@ -27,12 +23,18 @@ public class SearchService {
 
     private final DBProducts dbProducts;
 
+    private final RedisStorageService redisStorageService;
+
     private final String SEARCH_SERVICE_URL = "http://localhost:8085";
 
-    public SearchService(ProductDao productDao, RestTemplate restTemplate, DBProducts dbProducts) {
+    private final ObjectMapper objectMapper;
+
+    public SearchService(ProductDao productDao, RestTemplate restTemplate, DBProducts dbProducts, RedisStorageService redisStorageService, ObjectMapper objectMapper) {
         this.productDao = productDao;
         this.restTemplate = restTemplate;
         this.dbProducts = dbProducts;
+        this.redisStorageService = redisStorageService;
+        this.objectMapper = objectMapper;
     }
 
     @PostConstruct
@@ -45,20 +47,50 @@ public class SearchService {
     public ProductSearchResponse searchProducts(DtoQuery dtoQuery) {
         try {
 
-            ResponseEntity<SearchDocument[]> response =
-                    restTemplate.postForEntity(
-                            SEARCH_SERVICE_URL + "/search",
-                            dtoQuery,
-                            SearchDocument[].class
-                    );
+            String key = dtoQuery.query() + dtoQuery.payload().toString();
 
+            DtoRedis dataFromRedis = redisStorageService.takeRedis(key);
+
+            List<String> listIds = new ArrayList<>();
+
+            if (dataFromRedis != null && dataFromRedis.getValue() != null){
+                JsonNode jsonNode = dataFromRedis.getValue().path("id");
+                if (jsonNode.isArray()){
+                    for (var it : jsonNode){
+                        listIds.add(it.asText());
+                    }
+                }
+                redisStorageService.expireTTL(key);
+                System.out.println("ДАННЫЕ ИЗ REDIS");
+            } else {
+                ResponseEntity<SearchDocument[]> response =
+                        restTemplate.postForEntity(
+                                SEARCH_SERVICE_URL + "/search",
+                                dtoQuery,
+                                SearchDocument[].class
+                        );
+
+                for (var it : Objects.requireNonNull(response.getBody())){
+                    listIds.add(it.getId());
+                }
+
+                Map<String, Object> payload = new HashMap<>();
+                payload.put("query", dtoQuery.query());
+                payload.put("id", listIds);
+
+
+                JsonNode valueNode = objectMapper.valueToTree(payload);
+                DtoRedis dto = new DtoRedis(key, valueNode);
+
+                redisStorageService.putRedis(dto);
+
+                System.out.println("ДАННЫЕ ИЗ ELASTICSEARCH");
+            }
 
             List<Product> products = new ArrayList<>();
 
-            List<SearchDocument> documentList = Arrays.asList(response.getBody());
-
-            for (int i = 0; i < documentList.size(); i++) {
-                UUID curId = UUID.fromString(documentList.get(i).getId());
+            for (int i = 0; i < listIds.size(); i++) {
+                UUID curId = UUID.fromString(listIds.get(i));
 
                 Product product = productDao.getProductById(curId);
 

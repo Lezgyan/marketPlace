@@ -1,0 +1,357 @@
+{
+	"id": "609935be-f3a5-4d33-aa01-a0a4b444bc69",
+	"name": "Marketplace API Tests",
+	"timestamp": "2026-02-04T14:04:19.555Z",
+	"collection_id": "45295794-58dd1b4c-a73b-451c-8a75-f1b42cbe4f67",
+	"folder_id": 0,
+	"environment_id": "45295794-dbdcb755-8ce2-463c-bd78-25b08014441b",
+	"totalPass": 35,
+	"delay": 0,
+	"persist": true,
+	"status": "finished",
+	"startedAt": "2026-02-04T14:04:17.770Z",
+	"totalFail": 0,
+	"results": [
+		{
+			"id": "590f758e-73cc-4195-942b-bddf7359f38d",
+			"name": "01. Register User",
+			"url": "http://localhost:8080/auth/register",
+			"time": 131,
+			"responseCode": {
+				"code": 200,
+				"name": "OK"
+			},
+			"tests": {
+				"Регистрация успешна": true,
+				"Ответ пустой": true
+			},
+			"testPassFailCounts": {
+				"Регистрация успешна": {
+					"pass": 1,
+					"fail": 0
+				},
+				"Ответ пустой": {
+					"pass": 1,
+					"fail": 0
+				}
+			},
+			"times": [
+				131
+			],
+			"allTests": [
+				{
+					"Регистрация успешна": true,
+					"Ответ пустой": true
+				}
+			]
+		},
+		{
+			"id": "69e27823-cb45-447d-b2b2-dd8e3076b460",
+			"name": "02. Login User",
+			"url": "http://localhost:8080/auth/login",
+			"time": 107,
+			"responseCode": {
+				"code": 200,
+				"name": "OK"
+			},
+			"tests": {
+				"Логин успешен": true,
+				"Токен получен": true
+			},
+			"testPassFailCounts": {
+				"Логин успешен": {
+					"pass": 1,
+					"fail": 0
+				},
+				"Токен получен": {
+					"pass": 1,
+					"fail": 0
+				}
+			},
+			"times": [
+				107
+			],
+			"allTests": [
+				{
+					"Логин успешен": true,
+					"Токен получен": true
+				}
+			]
+		},
+		{
+			"id": "90c9595a-7a34-4fc6-b812-78f4d739c27e",
+			"name": "03. Search products",
+			"url": "http://localhost:8080/products/search",
+			"time": 32,
+			"responseCode": {
+				"code": 200,
+				"name": "OK"
+			},
+			"tests": {
+				"1. Статус 200 OK": true,
+				"2. items массив найден": true,
+				"3. Первый продукт корректный": true,
+				"4. Все ID валидны": true,
+				"5. Все названия корректны": true,
+				"6. Все dataRow корректны": true,
+				"7. Все цены > 0": true,
+				"8. Сохранить первый продукт": true
+			},
+			"testPassFailCounts": {
+				"1. Статус 200 OK": {
+					"pass": 1,
+					"fail": 0
+				},
+				"2. items массив найден": {
+					"pass": 1,
+					"fail": 0
+				},
+				"3. Первый продукт корректный": {
+					"pass": 1,
+					"fail": 0
+				},
+				"4. Все ID валидны": {
+					"pass": 1,
+					"fail": 0
+				},
+				"5. Все названия корректны": {
+					"pass": 1,
+					"fail": 0
+				},
+				"6. Все dataRow корректны": {
+					"pass": 1,
+					"fail": 0
+				},
+				"7. Все цены > 0": {
+					"pass": 1,
+					"fail": 0
+				},
+				"8. Сохранить первый продукт": {
+					"pass": 1,
+					"fail": 0
+				}
+			},
+			"times": [
+				32
+			],
+			"allTests": [
+				{
+					"1. Статус 200 OK": true,
+					"2. items массив найден": true,
+					"3. Первый продукт корректный": true,
+					"4. Все ID валидны": true,
+					"5. Все названия корректны": true,
+					"6. Все dataRow корректны": true,
+					"7. Все цены > 0": true,
+					"8. Сохранить первый продукт": true
+				}
+			]
+		},
+		{
+			"id": "9d5e8250-9748-45d6-bb0f-ecdbb4883319",
+			"name": "04. Product by id",
+			"url": "http://localhost:8080/products/0005dbcb-a084-4e82-ae39-708f5f5953b5",
+			"time": 17,
+			"responseCode": {
+				"code": 200,
+				"name": "OK"
+			},
+			"tests": {
+				"Статус 200 OK": true,
+				"ID присутствует": true,
+				"Название присутствует": true,
+				"dataRow присутствует": true,
+				"ID валидный UUID": true,
+				"dataRow.id присутствует": true,
+				"dataRow.name присутствует": true,
+				"dataRow.price корректный": true,
+				"dataRow.tags корректный массив": true,
+				"Все tags — строки": true,
+				"picture_urls корректные URL": true,
+				"Сохранить product ID": true
+			},
+			"testPassFailCounts": {
+				"Статус 200 OK": {
+					"pass": 1,
+					"fail": 0
+				},
+				"ID присутствует": {
+					"pass": 1,
+					"fail": 0
+				},
+				"Название присутствует": {
+					"pass": 1,
+					"fail": 0
+				},
+				"dataRow присутствует": {
+					"pass": 1,
+					"fail": 0
+				},
+				"ID валидный UUID": {
+					"pass": 1,
+					"fail": 0
+				},
+				"dataRow.id присутствует": {
+					"pass": 1,
+					"fail": 0
+				},
+				"dataRow.name присутствует": {
+					"pass": 1,
+					"fail": 0
+				},
+				"dataRow.price корректный": {
+					"pass": 1,
+					"fail": 0
+				},
+				"dataRow.tags корректный массив": {
+					"pass": 1,
+					"fail": 0
+				},
+				"Все tags — строки": {
+					"pass": 1,
+					"fail": 0
+				},
+				"picture_urls корректные URL": {
+					"pass": 1,
+					"fail": 0
+				},
+				"Сохранить product ID": {
+					"pass": 1,
+					"fail": 0
+				}
+			},
+			"times": [
+				17
+			],
+			"allTests": [
+				{
+					"Статус 200 OK": true,
+					"ID присутствует": true,
+					"Название присутствует": true,
+					"dataRow присутствует": true,
+					"ID валидный UUID": true,
+					"dataRow.id присутствует": true,
+					"dataRow.name присутствует": true,
+					"dataRow.price корректный": true,
+					"dataRow.tags корректный массив": true,
+					"Все tags — строки": true,
+					"picture_urls корректные URL": true,
+					"Сохранить product ID": true
+				}
+			]
+		},
+		{
+			"id": "b7930a19-aca4-4743-9b4d-799b6f0da721",
+			"name": "05. StartPage",
+			"url": "http://localhost:8080/products/startPage",
+			"time": 200,
+			"responseCode": {
+				"code": 200,
+				"name": "OK"
+			},
+			"tests": {
+				"Статус 200 OK": true,
+				"items массив присутствует": true,
+				"total поле корректное": true,
+				"Количество продуктов > 0": true,
+				"Все продукты имеют ID": true,
+				"Все продукты имеют название": true,
+				"Все продукты имеют dataRow": true,
+				"Все продукты имеют цену": true,
+				"Все продукты имеют теги": true,
+				"Сохранить первый продукт": true,
+				"Разнообразие тегов": true
+			},
+			"testPassFailCounts": {
+				"Статус 200 OK": {
+					"pass": 1,
+					"fail": 0
+				},
+				"items массив присутствует": {
+					"pass": 1,
+					"fail": 0
+				},
+				"total поле корректное": {
+					"pass": 1,
+					"fail": 0
+				},
+				"Количество продуктов > 0": {
+					"pass": 1,
+					"fail": 0
+				},
+				"Все продукты имеют ID": {
+					"pass": 1,
+					"fail": 0
+				},
+				"Все продукты имеют название": {
+					"pass": 1,
+					"fail": 0
+				},
+				"Все продукты имеют dataRow": {
+					"pass": 1,
+					"fail": 0
+				},
+				"Все продукты имеют цену": {
+					"pass": 1,
+					"fail": 0
+				},
+				"Все продукты имеют теги": {
+					"pass": 1,
+					"fail": 0
+				},
+				"Сохранить первый продукт": {
+					"pass": 1,
+					"fail": 0
+				},
+				"Разнообразие тегов": {
+					"pass": 1,
+					"fail": 0
+				}
+			},
+			"times": [
+				200
+			],
+			"allTests": [
+				{
+					"Статус 200 OK": true,
+					"items массив присутствует": true,
+					"total поле корректное": true,
+					"Количество продуктов > 0": true,
+					"Все продукты имеют ID": true,
+					"Все продукты имеют название": true,
+					"Все продукты имеют dataRow": true,
+					"Все продукты имеют цену": true,
+					"Все продукты имеют теги": true,
+					"Сохранить первый продукт": true,
+					"Разнообразие тегов": true
+				}
+			]
+		}
+	],
+	"count": 1,
+	"totalTime": 487,
+	"collection": {
+		"requests": [
+			{
+				"id": "590f758e-73cc-4195-942b-bddf7359f38d",
+				"method": "POST"
+			},
+			{
+				"id": "69e27823-cb45-447d-b2b2-dd8e3076b460",
+				"method": "POST"
+			},
+			{
+				"id": "90c9595a-7a34-4fc6-b812-78f4d739c27e",
+				"method": "POST"
+			},
+			{
+				"id": "9d5e8250-9748-45d6-bb0f-ecdbb4883319",
+				"method": "GET"
+			},
+			{
+				"id": "b7930a19-aca4-4743-9b4d-799b6f0da721",
+				"method": "GET"
+			}
+		]
+	}
+}

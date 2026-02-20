@@ -26,7 +26,7 @@ public class DBProducts {
 
         ObjectMapper mapper = new ObjectMapper();
         JsonFactory factory = mapper.getFactory();
-        File file = Paths.get("E:\\University\\course_4\\ScriptLP\\marketPlace\\processing\\src\\main\\resources\\data\\products.json").toFile();
+        File file = Paths.get("C:\\Users\\ddeni\\Downloads\\mark\\marketPlace\\processing\\src\\main\\resources\\data\\products.json").toFile();
 
         try (JsonParser parser = factory.createParser(file)) {
 

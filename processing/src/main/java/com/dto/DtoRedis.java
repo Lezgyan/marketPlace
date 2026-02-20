@@ -5,10 +5,17 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-@Getter
+
 @NoArgsConstructor
 @AllArgsConstructor
 public class DtoRedis {
+    public JsonNode getValue() {
+        return value;
+    }
+    public String getKey() {
+        return key;
+    }
+
 
     private String key;
 

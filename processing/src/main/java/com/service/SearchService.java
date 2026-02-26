@@ -49,7 +49,7 @@ public class SearchService {
     public ProductSearchResponse searchProducts(DtoQuery dtoQuery) {
         try {
 
-            String key = dtoQuery.query() + dtoQuery.payload().toString();
+            String key = dtoQuery.query() + dtoQuery.payload().toString() + dtoQuery.priceFrom() + dtoQuery.priceTo();
 
             DtoRedis dataFromRedis = redisStorageService.takeRedis(key);
 

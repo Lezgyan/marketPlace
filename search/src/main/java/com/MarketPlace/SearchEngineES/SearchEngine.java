@@ -7,6 +7,7 @@ import jakarta.annotation.PostConstruct;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -15,12 +16,12 @@ import java.util.Map;
 @Service
 public class SearchEngine {
     private final ElasticsearchClientDocker esClient = new ElasticsearchClientDocker();
-    private final String INDEX_NAME = "idk-what-to-put-here";
+    private final String INDEX_NAME = "test-36-search-documents-with-filters";
 
     public List<Document> getDocumentList(DtoQuery dtoQuery) throws IOException {
         List<Document> a = new ArrayList<>();
         try {
-            a = esClient.search(INDEX_NAME, dtoQuery.query(), dtoQuery.payload());
+            a = esClient.search(INDEX_NAME, dtoQuery.query(), dtoQuery.priceFrom(), dtoQuery.priceTo(), dtoQuery.payload());
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -48,8 +49,19 @@ public class SearchEngine {
 
                 List<String> tags = (ArrayList<String>) item.get("tags");
 
+                Double price =  (Double) item.get("price");
 
-                Document document = new Document(id, text, name, tags.toArray(String[]::new), item);
+                if (price == null){
+                    continue;
+                }
+                Document document = new Document(id,
+                        text,
+                        name,
+                        tags.toArray(String[]::new),
+                        BigDecimal.valueOf(price),
+                        item);
+
+
                 documents.add(document);
             }
             System.out.println("Start build index");

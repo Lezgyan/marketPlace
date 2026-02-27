@@ -7,6 +7,8 @@ import java.util.List;
 public class ProductSearchResponse {
     private List<Product> items;
 
+    public List<Product> getItems() {return  this.items;}
+
     public void setItems(List<Product> items) {
         this.items = items;
     }

@@ -33,13 +33,6 @@ public class ProductController {
         return ResponseEntity.ok(response);
     }
 
-   /* @PostMapping("/favorite")
-    public ResponseEntity<?> searchProducts(@RequestBody(required = false) DtoQuery dtoQuery) {
-
-        ProductSearchResponse response = searchService.searchProducts(dtoQuery);
-        return ResponseEntity.ok(response);
-    }*/
-
     @GetMapping("/{id}")
     public ResponseEntity<Product> getProductById(@PathVariable  java.util.UUID id) {
         Product product = searchService.searchProductById(id);

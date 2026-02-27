@@ -4,6 +4,7 @@ import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch.core.*;
 import co.elastic.clients.elasticsearch.core.search.Hit;
 import co.elastic.clients.elasticsearch.indices.*;
+import co.elastic.clients.json.JsonData;
 import co.elastic.clients.json.jackson.JacksonJsonpMapper;
 import co.elastic.clients.transport.ElasticsearchTransport;
 import co.elastic.clients.transport.rest_client.RestClientTransport;
@@ -16,6 +17,7 @@ import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 import java.io.StringReader;
+import java.math.BigDecimal;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -235,7 +237,7 @@ public class ElasticsearchClientDocker {
                             }
                         },
                         "price": {
-                            "type": "float"
+                            "type": "double"
                         },
                         "text": {
                             "type": "text",
@@ -262,7 +264,11 @@ public class ElasticsearchClientDocker {
 
     }
 
-    public List<Document> search(String indexName, String query, Map<String, Object> payload) throws IOException {
+    public List<Document> search(String indexName,
+                                 String query,
+                                 BigDecimal priceFrom,
+                                 BigDecimal priceTo,
+                                 Map<String, Object> payload) throws IOException {
         var response = client.search(s -> s
                         .index(indexName)
                         .from(0)
@@ -283,11 +289,20 @@ public class ElasticsearchClientDocker {
                                         }
                                     }
 
+                                    b.filter(f -> f.range(r -> {
+                                        r.field("price");
+                                        r.gte(JsonData.of(priceFrom));
+                                        r.lte(JsonData.of(priceTo));
+                                        return r;
+                                    }));
+
                                     if (payload != null && !payload.isEmpty()) {
                                         for (var e : payload.entrySet()) {
                                             String key = e.getKey();
                                             String value = Objects.toString(e.getValue(), null);
-                                            if (key == null || key.isBlank() || value == null) continue;
+                                            if (key == null || key.isBlank() || value == null){
+                                                continue;
+                                            }
 
                                             b.filter(f -> f.simpleQueryString(sqs -> sqs
                                                     .fields("payload")
@@ -295,6 +310,7 @@ public class ElasticsearchClientDocker {
                                             ));
                                         }
                                     }
+
 
                                     return b;
                                 })
@@ -305,6 +321,7 @@ public class ElasticsearchClientDocker {
         return response.hits().hits().stream()
                 .map(Hit::source)
                 .filter(Objects::nonNull)
+//                .filter(x -> priceFrom.compareTo(x.getPrice()) <= 0 && priceTo.compareTo(x.getPrice()) >= 0)
                 .collect(Collectors.toList());
     }
 

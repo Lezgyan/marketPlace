@@ -27,7 +27,11 @@ public class SearchService {
 
     private final String SEARCH_SERVICE_URL = "http://localhost:8085";
 
+    private final String RERANKER_SERVICE_URL = "http://localhost:5000";
+
     private final Integer COUNT_PRODUCTS_PAGE  = 20;
+
+    private final boolean FLAG = false;
 
     private final ObjectMapper objectMapper;
 
@@ -72,8 +76,47 @@ public class SearchService {
                                 SearchDocument[].class
                         );
 
-                for (var it : Objects.requireNonNull(response.getBody())){
-                    listIds.add(it.getId());
+
+
+
+                if (FLAG){
+                    List<SearchDocument> documentList = Arrays.asList(response.getBody());
+
+
+                    Map<String, Object> rankReq = new HashMap<>();
+                    rankReq.put("query", dtoQuery.query());
+                    rankReq.put("top_k", documentList.size());
+
+                    List<Map<String, Object>> items = new ArrayList<>();
+                    for (SearchDocument doc : documentList) {
+                        Map<String, Object> it = new HashMap<>();
+                        it.put("id", doc.getId());
+                        it.put("name", doc.getPayload().get("name"));
+                        it.put("text", doc.getPayload().get("text"));
+                        it.put("tags", doc.getPayload().get("tags"));
+                        items.add(it);
+                    }
+                    rankReq.put("items", items);
+
+                    ResponseEntity<Map> rankResp = restTemplate.postForEntity(
+                            RERANKER_SERVICE_URL + "/rank",
+                            rankReq,
+                            Map.class
+                    );
+
+                    List<Map<String, Object>> results =
+                            (List<Map<String, Object>>) rankResp.getBody().get("results");
+
+
+                    for (Map<String, Object> r : results) {
+                        String id = String.valueOf(r.get("id"));
+                        listIds.add(id);
+                    }
+
+                } else {
+                    for (var it : Objects.requireNonNull(response.getBody())){
+                        listIds.add(it.getId());
+                    }
                 }
 
                 Map<String, Object> payload = new HashMap<>();

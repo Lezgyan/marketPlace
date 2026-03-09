@@ -9,6 +9,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.UUID;
 
 @Repository
@@ -70,5 +73,42 @@ public class ProductDao {
 
         return Integer.valueOf(0).equals(jdbcTemplate.queryForObject(sql, Integer.class));
     }
+
+
+    public List<Product> getProductByListIds(List<UUID> ids) {
+        if (ids.isEmpty()){
+            return new ArrayList<>();
+        }
+
+        try {
+            String sql = "SELECT id, name, raw_data FROM products WHERE id IN (%s)";
+            String inSql = String.join(",", Collections.nCopies(ids.size(), "?"));
+            List<Product> products = jdbcTemplate.query(
+                    String.format("SELECT id, name, raw_data FROM products WHERE id IN (%s)", inSql),
+                    ids.toArray(),
+                    (rs, rowNum) -> {
+                        UUID productId = rs.getObject("id", UUID.class);
+                        String name = rs.getString("name");
+
+                        String rawJson = rs.getString("raw_data");
+
+                        JsonNode rawData = null;
+                        try {
+                            rawData = mapper.readTree(rawJson);
+                        } catch (JsonProcessingException e) {
+                            throw new RuntimeException(e);
+                        }
+
+                        return new Product(productId, name, rawData);
+                    });
+
+            return products;
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new RuntimeException("Products not found", e);
+        }
+    }
+
 
 }

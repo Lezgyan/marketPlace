@@ -54,15 +54,16 @@ public class FavoriteService {
     public ProductSearchResponse findFavorites(Integer userId){
         String sql = "SELECT productId FROM favorites WHERE userId = ?";
         List<UUID> ids = jdbcTemplate.queryForList(sql,UUID.class, userId);
-        List<Product> products = new ArrayList<>();
 
-        for (int i = 0; i < ids.size(); i++) {
-            UUID curId = ids.get(i);
+        List<Product> products = productDao.getProductByListIds(ids);
 
-            Product product = productDao.getProductById(curId);
-
-            products.add(product);
-        }
+//        for (int i = 0; i < ids.size(); i++) {
+//            UUID curId = ids.get(i);
+//
+//            Product product = productDao.getProductById(curId);
+//
+//            products.add(product);
+//        }
 
         ProductSearchResponse productSearchResponse = new ProductSearchResponse();
         productSearchResponse.setItems(products);

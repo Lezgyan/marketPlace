@@ -132,15 +132,13 @@ public class SearchService {
                 System.out.println("ДАННЫЕ ИЗ ELASTICSEARCH");
             }
 
-            List<Product> products = new ArrayList<>();
+            List<UUID> idProducts = new ArrayList<>();
 
             for (int i = COUNT_PRODUCTS_PAGE * dtoQuery.numberOfPage(); i < Math.min(listIds.size(), COUNT_PRODUCTS_PAGE * (dtoQuery.numberOfPage() + 1)); i++) {
-                UUID curId = UUID.fromString(listIds.get(i));
-
-                Product product = productDao.getProductById(curId);
-
-                products.add(product);
+                idProducts.add(UUID.fromString(listIds.get(i)));
             }
+
+            List<Product> products = productDao.getProductByListIds(idProducts);
 
             ProductSearchResponse productSearchResponse = new ProductSearchResponse();
             productSearchResponse.setItems(products);

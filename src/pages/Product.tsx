@@ -1,5 +1,3 @@
-import { UUID } from "crypto";
-
 export { type Product };
 export type { ProductCardProps };
 

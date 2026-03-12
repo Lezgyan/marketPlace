@@ -6,15 +6,16 @@ const useProductSearch = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(false);
   
-  const searchProducts = async (query: string, cnt: number = 10) => {
+  const searchProducts = async (query: string, numberOfPage: number = 10, priceFrom: number = 0, priceTo: number = 100000, payload: [key: string, value:string ]) => {
     setLoading(true);
+    payload = {};
     try {
       const response = await fetch('http://localhost:8080/products/search', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ query, cnt })
+        body: JSON.stringify({ query, numberOfPage, priceFrom, priceTo, payload})
       });
       
       const data = await response.json();
@@ -45,7 +46,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onProductClick }) =>
       style={{
         border: '1px solid #ddd',
         borderRadius: '8px',
-        padding: '16px',
+        padding: '8px',
         margin: '8px',
         width: '250px',
         boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
@@ -136,20 +137,11 @@ const SearchPage: React.FC = () => {
     }
   }, []);
 
-  useEffect(() => {
-    const timerId = setTimeout(() => {
-      if (searchTerm.trim()) {
-        searchProducts(searchTerm, 10);
-      } else {
-        // Если поисковая строка пустая, очищаем результаты
-        // Или можете загрузить популярные товары
-      }
-    }, 500); // Задержка 500ms
-
-    return () => {
-      clearTimeout(timerId);
-    };
-  }, [searchTerm, searchProducts]);
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setSearchTerm(value);
+    searchProducts(value, 0, 0, 10001, {"Стабилизация": "белый"}); 
+  };
 
   const handleProductClick = (product: Product) => {
     navigate(`/product/${product.id}`);
@@ -217,7 +209,7 @@ const SearchPage: React.FC = () => {
         type="text"
         placeholder="Введите название товара..."
         value={searchTerm}
-        onChange={(e) => setSearchTerm(e.target.value)}
+        onChange={handleSearchChange}
         style={{
           width: '100%',
           maxWidth: '500px',

@@ -7,66 +7,97 @@ from selenium.webdriver.support import expected_conditions as EC
 
 
 def test_product_page_loads_correctly(driver, api_base_url):
-    try:
-        response = requests.post(f"{api_base_url}/products/search",
-                                 json={"query": "ноутбук", "cnt": 1}, timeout=5)
-        if response.status_code != 200:
-            pytest.skip("API недоступен")
-        first_product = response.json()['items'][0]
-        product_id = first_product['id']
-    except:
-        pytest.skip("Не удалось получить ID товара из API")
+    response = requests.post(f"{api_base_url}/products/search",
+                             json={"query": "ноутбук", "numberOfPage": 1, "priceFrom": 0, "priceTo": 100000,
+                                   "payload": {}},
+                             timeout=10)
+    assert response.status_code == 200
+    items = response.json().get('items', [])
+    product_id = items[0]['id'] if items else pytest.skip("Нет товаров")
 
     driver.get(f"http://localhost:3000/product/{product_id}")
-
     wait = WebDriverWait(driver, 15)
-    h1 = wait.until(EC.presence_of_element_located((By.TAG_NAME, "h1")))
 
-    assert h1.text.strip(), "Название товара не загрузилось!"
-    print(f"✅ Загружен товар: {h1.text}")
+    wait.until(lambda d: "/product/" in d.current_url)
+    time.sleep(2)  # React рендер
+
+    h1 = driver.find_element(By.TAG_NAME, "h1")
+    assert h1.text.strip(), "h1 пустой!"
+
+    price = driver.find_elements(By.XPATH, "//p[contains(@style, '32px') or contains(@style, 'bold')]")
+    price_text = price[0].text.strip() if price else "НЕ НАЙДЕНА"
+
+    print(f"Товар: {h1.text[:40]} | Цена: {price_text}")
 
 
-def test_product_error_handling(driver):
+def test_product_error_states(driver):
     driver.get("http://localhost:3000/product/999999")
-
     wait = WebDriverWait(driver, 10)
-    error_states = [
-        EC.text_to_be_present_in_element((By.TAG_NAME, "h1"), "Товар не найден"),
-        EC.text_to_be_present_in_element((By.TAG_NAME, "h1"), "Не удалось загрузить")
-    ]
 
-    error_found = False
-    for condition in error_states:
-        try:
-            wait.until(condition)
-            error_found = True
-            break
-        except:
-            continue
-
-    assert error_found, "Страница ошибки не отображается!"
+    error_h1 = wait.until(EC.any_of(
+        EC.text_to_be_present_in_element((By.TAG_NAME, "h1"), "Не удалось"),
+        EC.text_to_be_present_in_element((By.TAG_NAME, "h1"), "Товар не найден")
+    ))
+    print("Error state OK")
 
 
-def test_navigation_from_search(driver):
+def test_product_gallery(driver, api_base_url):
+    response = requests.post(f"{api_base_url}/products/search",
+                             json={"query": "ноутбук", "numberOfPage": 1, "payload": {}}, timeout=10)
+    product_id = response.json()['items'][0]['id']
+
+    driver.get(f"http://localhost:3000/product/{product_id}")
+    wait = WebDriverWait(driver, 10)
+
+    images = driver.find_elements(By.TAG_NAME, "img")
+    assert len(images) > 0, "Нет изображений!"
+    print(f"Изображений: {len(images)}")
+
+    buttons = driver.find_elements(By.XPATH, "//button[contains(@style, 'absolute')]")
+    print(f"Галерея кнопок: {len(buttons)}")
+
+
+def test_search_to_product_e2e(driver):
     driver.get("http://localhost:3000/search")
+    wait = WebDriverWait(driver, 20)
 
-    wait = WebDriverWait(driver, 15)
-    search_input = wait.until(EC.presence_of_element_located((
-        By.CSS_SELECTOR, "input[placeholder*='Введите название']")))
-
+    search_input = wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, 'input[placeholder*="название"]')))
     search_input.clear()
-    search_input.send_keys("шапки")
+    search_input.send_keys("ноутбук")
+    time.sleep(5)
+
+    cards = driver.find_elements(By.CSS_SELECTOR, 'div[style*="border"], div[style*="250px"]')
+    assert len(cards) > 0, "Карточки не найдены!"
+
+    cards[0].click()
     time.sleep(2)
 
-    cards = wait.until(EC.presence_of_all_elements_located((
-        By.CSS_SELECTOR, "div[style*='border: 1px solid #ddd']")))
+    h1 = driver.find_element(By.TAG_NAME, "h1")
+    assert h1.text.strip()
+    print(f"E2E: {h1.text[:40]}")
 
-    if len(cards) > 0:
+
+def test_product_back_button(driver):
+    driver.get("http://localhost:3000/search")
+    wait = WebDriverWait(driver, 20)
+
+    search_input = wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, 'input[placeholder*="название"]')))
+    search_input.send_keys("ноутбук")
+    time.sleep(5)
+
+    cards = driver.find_elements(By.CSS_SELECTOR, 'div[style*="border"]')
+    if cards:
         cards[0].click()
-        product_h1 = WebDriverWait(driver, 10).until(
-            EC.presence_of_element_located((By.TAG_NAME, "h1"))
-        )
-        assert product_h1.text.strip(), "Переход на товар не сработал!"
-        print(f"✅ Переход на товар: {product_h1.text}")
+        time.sleep(2)
+
+        back_btns = driver.find_elements(By.XPATH, "//button[contains(text(), 'Назад')]")
+        if back_btns:
+            current_url = driver.current_url
+            back_btns[0].click()
+            time.sleep(1)
+            assert driver.current_url != current_url
+            print("Кнопка Назад OK")
+        else:
+            print("Нет кнопки Назад — OK")
     else:
-        pytest.skip("Карточки не найдены в поиске")
+        pytest.skip("Нет карточек")

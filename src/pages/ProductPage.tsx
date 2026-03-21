@@ -117,7 +117,7 @@ const ProductPage: React.FC = () => {
       <button 
         onClick={() => navigate(-1)}
         style={{
-          padding: '8px 16px',
+          padding: '12px 16px',
           marginBottom: '20px',
           backgroundColor: '#f5f5f5',
           border: '1px solid #ddd',
@@ -319,51 +319,6 @@ const ProductPage: React.FC = () => {
               {productData.price?.toLocaleString('ru-RU')} {productData.currency || '₽'}
             </p>
 
-            {productData.text && (
-              <div style={{ marginBottom: '20px' }}>
-                <h3 style={{ margin: '0 0 10px 0', fontSize: '18px' }}>Описание</h3>
-                <p style={{ lineHeight: '1.6', color: '#333' }}>{productData.text}</p>
-              </div>
-            )}
-
-            {/* Динамические характеристики */}
-            {dynamicProperties.length > 0 && (
-              <div style={{ marginBottom: '20px' }}>
-                <h3 style={{ margin: '0 0 15px 0', fontSize: '18px' }}>Характеристики</h3>
-                <div style={{
-                  border: '1px solid #e0e0e0',
-                  borderRadius: '8px',
-                  overflow: 'hidden'
-                }}>
-                  {dynamicProperties.map(([key, value], index) => (
-                    <div
-                      key={key}
-                      style={{
-                        display: 'flex',
-                        padding: '12px 16px',
-                        backgroundColor: index % 2 === 0 ? '#fafafa' : 'white',
-                        borderBottom: index === dynamicProperties.length - 1 ? 'none' : '1px solid #e0e0e0'
-                      }}
-                    >
-                      <div style={{ 
-                        flex: '1', 
-                        fontWeight: '500',
-                        color: '#555'
-                      }}>
-                        {key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
-                      </div>
-                      <div style={{ 
-                        flex: '1',
-                        color: '#333'
-                      }}>
-                        {Array.isArray(value) ? value.join(', ') : String(value)}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
             <button 
               style={{
                 padding: '12px 24px',
@@ -403,6 +358,49 @@ const ProductPage: React.FC = () => {
             </div>
           </div>
         </div>
+      {productData.text && (
+              <div style={{ marginBottom: '20px' }}>
+                <h3 style={{ margin: '0 0 10px 0', fontSize: '18px' }}>Описание</h3>
+                <p style={{ lineHeight: '1.6', color: '#333' }}>{productData.text}</p>
+              </div>
+            )}
+      {/* Динамические характеристики */}
+            {dynamicProperties.length > 0 && (
+              <div style={{ marginBottom: '20px' }}>
+                <h3 style={{ margin: '0 0 15px 0', fontSize: '18px' }}>Характеристики</h3>
+                <div style={{
+                  border: '1px solid #e0e0e0',
+                  borderRadius: '8px',
+                  overflow: 'true'
+                }}>
+                  {dynamicProperties.map(([key, value], index) => (
+                    <div
+                      key={key}
+                      style={{
+                        display: 'flex',
+                        padding: '12px 20px',
+                        backgroundColor: index % 2 === 0 ? '#fafafa' : 'white',
+                        borderBottom: index === dynamicProperties.length - 1 ? 'none' : '1px solid #e0e0e0'
+                      }}
+                    >
+                      <div style={{ 
+                        flex: '1', 
+                        fontWeight: '500',
+                        color: '#555'
+                      }}>
+                        {key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                      </div>
+                      <div style={{ 
+                        flex: '1',
+                        color: '#333'
+                      }}>
+                        {Array.isArray(value) ? value.join(', ') : String(value)}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
       </div>
     </div>
   );

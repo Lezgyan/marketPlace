@@ -8,7 +8,7 @@ const useProductSearch = () => {
   
   const searchProducts = async (query: string, numberOfPage: number = 10, priceFrom: number = 0, priceTo: number = 100000, payload: [key: string, value:string ]) => {
     setLoading(true);
-    payload = {};
+    payload = {"Вес": "42 г"};
     try {
       const response = await fetch('http://localhost:8080/products/search', {
         method: 'POST',

@@ -1,6 +1,11 @@
 package com.service;
 
+import com.client.RankerGrpcClient;
 import com.dto.*;
+import com.example.ranker.grpc.RankItem;
+import com.example.ranker.grpc.RankRequest;
+import com.example.ranker.grpc.RankResponse;
+import com.example.ranker.grpc.RankResult;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.repository.ProductDao;
@@ -25,9 +30,9 @@ public class SearchService {
 
     private final RedisStorageService redisStorageService;
 
-    private final String SEARCH_SERVICE_URL = "http://localhost:8085";
+    private final RankerGrpcClient rankerGrpcClient;
 
-    private final String RERANKER_SERVICE_URL = "http://localhost:5000";
+    private final String SEARCH_SERVICE_URL = "http://localhost:8085";
 
     private final Integer COUNT_PRODUCTS_PAGE  = 20;
 
@@ -35,11 +40,12 @@ public class SearchService {
 
     private final ObjectMapper objectMapper;
 
-    public SearchService(ProductDao productDao, RestTemplate restTemplate, DBProducts dbProducts, RedisStorageService redisStorageService, ObjectMapper objectMapper) {
+    public SearchService(ProductDao productDao, RestTemplate restTemplate, DBProducts dbProducts, RedisStorageService redisStorageService, RankerGrpcClient rankerGrpcClient, ObjectMapper objectMapper) {
         this.productDao = productDao;
         this.restTemplate = restTemplate;
         this.dbProducts = dbProducts;
         this.redisStorageService = redisStorageService;
+        this.rankerGrpcClient = rankerGrpcClient;
         this.objectMapper = objectMapper;
     }
 
@@ -77,44 +83,39 @@ public class SearchService {
                         );
 
 
-
-
-                if (FLAG){
+                if (FLAG) {
                     List<SearchDocument> documentList = Arrays.asList(response.getBody());
 
+                    RankRequest.Builder rankRequestBuilder = RankRequest.newBuilder()
+                            .setQuery(dtoQuery.query())
+                            .setTopK(documentList.size());
 
-                    Map<String, Object> rankReq = new HashMap<>();
-                    rankReq.put("query", dtoQuery.query());
-                    rankReq.put("top_k", documentList.size());
-
-                    List<Map<String, Object>> items = new ArrayList<>();
                     for (SearchDocument doc : documentList) {
-                        Map<String, Object> it = new HashMap<>();
-                        it.put("id", doc.getId());
-                        it.put("name", doc.getPayload().get("name"));
-                        it.put("text", doc.getPayload().get("text"));
-                        it.put("tags", doc.getPayload().get("tags"));
-                        items.add(it);
+                        RankItem.Builder itemBuilder = RankItem.newBuilder()
+                                .setId(doc.getId())
+                                .setName(String.valueOf(doc.getPayload().getOrDefault("name", "")))
+                                .setText(String.valueOf(doc.getPayload().getOrDefault("text", "")));
+
+                        Object tagsObj = doc.getPayload().get("tags");
+                        if (tagsObj instanceof List<?> tagsList) {
+                            for (Object tag : tagsList) {
+                                if (tag != null) {
+                                    itemBuilder.addTags(String.valueOf(tag));
+                                }
+                            }
+                        }
+
+                        rankRequestBuilder.addItems(itemBuilder.build());
                     }
-                    rankReq.put("items", items);
 
-                    ResponseEntity<Map> rankResp = restTemplate.postForEntity(
-                            RERANKER_SERVICE_URL + "/rank",
-                            rankReq,
-                            Map.class
-                    );
+                    RankResponse rankResponse = rankerGrpcClient.rank(rankRequestBuilder.build());
 
-                    List<Map<String, Object>> results =
-                            (List<Map<String, Object>>) rankResp.getBody().get("results");
-
-
-                    for (Map<String, Object> r : results) {
-                        String id = String.valueOf(r.get("id"));
-                        listIds.add(id);
+                    for (RankResult result : rankResponse.getResultsList()) {
+                        listIds.add(result.getId());
                     }
 
                 } else {
-                    for (var it : Objects.requireNonNull(response.getBody())){
+                    for (var it : Objects.requireNonNull(response.getBody())) {
                         listIds.add(it.getId());
                     }
                 }
@@ -145,7 +146,6 @@ public class SearchService {
             return productSearchResponse;
 
         } catch (Exception e) {
-            //log.error("Error calling search service", e);
             throw new RuntimeException("Search service unavailable", e);
         }
     }

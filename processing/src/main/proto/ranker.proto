@@ -1,0 +1,42 @@
+syntax = "proto3";
+
+package ranker;
+
+option java_multiple_files = true;
+option java_package = "com.example.ranker.grpc";
+option java_outer_classname = "RankerProto";
+
+service RankerService {
+  rpc Rank (RankRequest) returns (RankResponse);
+  rpc Health (HealthRequest) returns (HealthResponse);
+}
+
+message HealthRequest {}
+
+message HealthResponse {
+  string status = 1;
+  bool embeddings_loaded = 2;
+}
+
+message RankRequest {
+  string query = 1;
+  int32 top_k = 2;
+  repeated RankItem items = 3;
+}
+
+message RankItem {
+  string id = 1;
+  string name = 2;
+  string text = 3;
+  repeated string tags = 4;
+}
+
+message RankResult {
+  string id = 1;
+  double score = 2;
+}
+
+message RankResponse {
+  string query = 1;
+  repeated RankResult results = 2;
+}

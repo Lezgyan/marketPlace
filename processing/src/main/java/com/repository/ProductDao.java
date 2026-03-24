@@ -111,4 +111,41 @@ public class ProductDao {
     }
 
 
+    public void createProduct(Product product) {
+        String sql = """
+    INSERT INTO product (id, name, data_row)
+    VALUES (?, ?, ?, ?, ?)
+    """;
+
+        jdbcTemplate.update(
+                sql,
+                product.getId(),
+                product.getName(),
+                product.getDataRow()
+        );
+    }
+
+    public void updateProduct(UUID id, Product product) {
+        String sql = """
+        UPDATE product
+        SET name = ?,
+            description = ?,
+            price = ?,
+            category = ?
+        WHERE id = ?
+        """;
+
+        int updatedRows = jdbcTemplate.update(
+                sql,
+                product.getName(),
+                product.getDataRow(),
+                id
+        );
+    }
+
+    public void deleteProduct(UUID id) {
+        String sql = "DELETE FROM product WHERE id = ?";
+
+        jdbcTemplate.update(sql, id);
+    }
 }

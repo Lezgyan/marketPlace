@@ -3,14 +3,13 @@ package com.controller;
 import com.dto.DtoQuery;
 import com.dto.Product;
 import com.dto.ProductSearchResponse;
-import com.repository.ProductDao;
 import com.service.SearchService;
 import com.service.SendProductsService;
-import jakarta.validation.constraints.Max;
-import jakarta.validation.constraints.Min;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.beans.factory.annotation.Autowired;
+
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/products")
@@ -26,24 +25,63 @@ public class ProductController {
         this.searchService = searchService;
     }
 
-    @PostMapping("/search")
-    public ResponseEntity<?> searchProducts(@RequestBody(required = false) DtoQuery dtoQuery) {
 
-        ProductSearchResponse response = searchService.searchProducts(dtoQuery);
+    @GetMapping
+    public ResponseEntity<ProductSearchResponse> getProducts(
+            @RequestParam(required = false) String query,
+            @RequestParam(required = false) String view,
+            @RequestParam(required = false) Integer numberOfPage
+    ) {
+        ProductSearchResponse response;
+
+        if ("startPage".equalsIgnoreCase(view)) {
+            response = sendProductsService.getSerialProductsForStartPage();
+        } else {
+            response = searchService.searchProducts(
+                    new DtoQuery(
+                            query,
+                            numberOfPage,
+                            null,
+                            null,
+                            null
+                    )
+            );
+        }
+
         return ResponseEntity.ok(response);
     }
 
+    @PostMapping
+    public ResponseEntity<Product> createProduct(@RequestBody Product product) {
+        searchService.createProduct(product);
+        return ResponseEntity.status(HttpStatus.CREATED).body(product);
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<Product> updateProduct(
+            @PathVariable UUID id,
+            @RequestBody Product product
+    ) {
+        searchService.updateProduct(id, product);
+        return ResponseEntity.ok(product);
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteProduct(@PathVariable UUID id) {
+        searchService.deleteProduct(id);
+        return ResponseEntity.noContent().build();
+    }
+
     @GetMapping("/{id}")
-    public ResponseEntity<Product> getProductById(@PathVariable  java.util.UUID id) {
+    public ResponseEntity<Product> getProductById(@PathVariable UUID id) {
         Product product = searchService.searchProductById(id);
         return ResponseEntity.ok(product);
     }
 
-    @GetMapping("/startPage")
-    public ResponseEntity<?> getSerialProducts(){
-        ProductSearchResponse response = sendProductsService.getSerialProductsForStartPage();
+    @PostMapping("/search")
+    public ResponseEntity<ProductSearchResponse> searchProducts(@RequestBody DtoQuery dtoQuery) {
 
+        ProductSearchResponse response = searchService.searchProducts(dtoQuery);
         return ResponseEntity.ok(response);
     }
-
 }

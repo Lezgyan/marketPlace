@@ -111,7 +111,7 @@ public class ProductDao {
     }
 
 
-    public void createProduct(Product product) {
+    public UUID createProduct(Product product) {
         String sql = """
     INSERT INTO product (id, name, data_row)
     VALUES (?, ?, ?, ?, ?)
@@ -123,6 +123,8 @@ public class ProductDao {
                 product.getName(),
                 product.getDataRow()
         );
+
+        return product.getId();
     }
 
     public void updateProduct(UUID id, Product product) {

@@ -154,8 +154,8 @@ public class SearchService {
         return productDao.getProductById(id);
     }
 
-    public void createProduct(Product product) {
-        productDao.createProduct(product);
+    public UUID createProduct(Product product) {
+        return productDao.createProduct(product);
     }
 
     public void updateProduct(UUID id, Product product) {

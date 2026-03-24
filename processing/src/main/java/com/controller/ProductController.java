@@ -5,10 +5,10 @@ import com.dto.Product;
 import com.dto.ProductSearchResponse;
 import com.service.SearchService;
 import com.service.SendProductsService;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.net.URI;
 import java.util.UUID;
 
 @RestController
@@ -53,8 +53,9 @@ public class ProductController {
 
     @PostMapping
     public ResponseEntity<Product> createProduct(@RequestBody Product product) {
-        searchService.createProduct(product);
-        return ResponseEntity.status(HttpStatus.CREATED).body(product);
+        UUID uuid = searchService.createProduct(product);
+        URI location = URI.create("/products/" + uuid);
+        return ResponseEntity.created(location).body(null);
     }
 
     @PutMapping("/{id}")

@@ -74,6 +74,12 @@ public class ProductDao {
         return Integer.valueOf(0).equals(jdbcTemplate.queryForObject(sql, Integer.class));
     }
 
+    public int updatePrice(UUID id, double newPrice) {
+        String sql = "UPDATE products SET price = ? WHERE id = ?";
+
+        return jdbcTemplate.update(sql, newPrice, id);
+    }
+
 
     public List<Product> getProductByListIds(List<UUID> ids) {
         if (ids.isEmpty()){

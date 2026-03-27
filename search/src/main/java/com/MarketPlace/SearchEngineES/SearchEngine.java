@@ -16,7 +16,7 @@ import java.util.Map;
 @Service
 public class SearchEngine {
     private final ElasticsearchClientDocker esClient = new ElasticsearchClientDocker();
-    private final String INDEX_NAME = "test-36-search-documents-with-filters";
+    private final String INDEX_NAME = "wow-new-name-cool";
 
     public List<Document> getDocumentList(DtoQuery dtoQuery) throws IOException {
         List<Document> a = new ArrayList<>();

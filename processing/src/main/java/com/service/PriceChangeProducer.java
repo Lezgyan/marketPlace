@@ -123,7 +123,6 @@ public class PriceChangeProducer {
             driver.get(url);
 
             Thread.sleep(2000);
-
             String xpath1 = "//*[@id=\"/content/page/fancyPage/defaultPage/mainDO/price/price\"]/div/div[1]/div/div[1]/span/span[1]";
             String xpath2 = "//*[@id=\"/content/page/fancyPage/defaultPage/mainDO/price/price\"]/div/div[1]/div/div[1]/button/span/span[1]";
 

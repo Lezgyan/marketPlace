@@ -12,6 +12,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import java.util.UUID;
+
 @RestController
 @RequestMapping("/products")
 public class FavoriteController {
@@ -41,6 +43,12 @@ public class FavoriteController {
     public ResponseEntity<?> recomendFavoriteProduct(@RequestBody FavoriteQuery fq) {
         ProductSearchResponse response = favoriteService.recommendByFavorites(fq);
 
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/favorite/{id}")
+    public ResponseEntity<?> getAllFavorites(@PathVariable Integer id){
+        ProductSearchResponse response = favoriteService.findFavorites(id);
         return ResponseEntity.ok(response);
     }
 

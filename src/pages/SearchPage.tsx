@@ -546,6 +546,9 @@ const SearchPage: React.FC = () => {
     navigate(`/login`);
   };
 
+  const handleUserClick = () =>{
+    navigate('/user');
+  }
   const handleLogout = () => {
     localStorage.removeItem('authToken');
     localStorage.removeItem('username');
@@ -566,14 +569,17 @@ const SearchPage: React.FC = () => {
       <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '20px' }}>
         {username ? (
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <span style={{ 
-              padding: '8px 16px',
-              backgroundColor: '#f0f0f0',
-              borderRadius: '4px',
-              border: '1px solid #ddd'
-            }}>
+            <button 
+              onClick={handleUserClick}
+              style={{ 
+                padding: '8px 16px',
+                backgroundColor: '#f0f0f0',
+                borderRadius: '4px',
+                border: '1px solid #ddd',
+                cursor: 'pointer'
+              }}>
               👤 {username}
-            </span>
+            </button>
             <button 
               onClick={handleLogout}
               style={{

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
+import UserPage from './pages/UserPage';
 import './App.css';
 import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import SearchPage from './pages/SearchPage';
@@ -25,6 +26,7 @@ const AppContent: React.FC = () => {
 
   return (
     <Routes>
+      <Route path="/user" element={<UserPage />} />
       <Route path="/" element={<SearchPage />} />
       <Route path="/product/:id" element={<ProductPage />} />
       <Route 

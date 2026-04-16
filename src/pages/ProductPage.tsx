@@ -1,6 +1,8 @@
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import React, { useState, useEffect } from 'react';
 import { Product } from "./Product.tsx";
+import { useFavorites } from '../services/FavoriteService';
+import { relative } from 'path';
 
 const useProduct = () => {
   const [product, setProduct] = useState<Product | null>(null);
@@ -41,12 +43,32 @@ const ProductPage: React.FC = () => {
   const navigate = useNavigate();
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const { product, getProductByID, loading, error } = useProduct();
+  const [notification, setNotification] = useState<{ show: boolean; message: string; type: 'success' | 'error' }>({
+    show: false,
+    message: '',
+    type: 'success'
+  });
+  const { showNotification, addToFavorites, removeFromFavorites, isFavorite, loading: favoritesLoading } = useFavorites();
+
+  const handleFavoriteToggle = async () => {
+    if (!product) return;
+    
+    const isFav = isFavorite(product.id);
+    
+    if (isFav) {
+      const success = await removeFromFavorites(product.id);
+    } else {
+      const success = await addToFavorites(product);
+    }
+  };
 
   useEffect(() => {
     if (id) {
       getProductByID(id);
     }
   }, [id]);
+
+
 
   const getDynamicProperties = () => {
     if (!product?.dataRow) return [];
@@ -111,9 +133,29 @@ const ProductPage: React.FC = () => {
 
   const productData = product.dataRow;
   const images = productData.picture_urls || [];
+  const isProductFavorite = isFavorite(product.id);
 
   return (
-    <div style={{ padding: '20px', maxWidth: '1200px', margin: '0 auto' }}>
+    <div style={{ padding: '20px', maxWidth: '1200px', margin: '0 auto', position: 'relative' }}>
+
+      {/* Уведомление */}
+      {notification.show && (
+        <div style={{
+          position: 'fixed',
+          top: '20px',
+          right: '20px',
+          padding: '12px 20px',
+          backgroundColor: notification.type === 'success' ? '#4caf50' : '#f44336',
+          color: 'white',
+          borderRadius: '8px',
+          zIndex: 1000,
+          animation: 'slideIn 0.3s ease-out',
+          boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
+        }}>
+          {notification.message}
+        </div>
+      )}
+
       <button 
         onClick={() => navigate(-1)}
         style={{
@@ -320,19 +362,43 @@ const ProductPage: React.FC = () => {
             </p>
 
             <button 
+              onClick={handleFavoriteToggle}
+              disabled={favoritesLoading}
               style={{
                 padding: '12px 24px',
-                backgroundColor: '#2c5aa0',
+                backgroundColor: isProductFavorite ? '#ff4444' : '#2c5aa0',
                 color: 'white',
                 border: 'none',
                 borderRadius: '4px',
                 fontSize: '16px',
-                cursor: 'pointer',
+                cursor: favoritesLoading ? 'wait' : 'pointer',
                 width: '100%',
-                marginBottom: '15px'
+                marginBottom: '15px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px',
+                transition: 'all 0.2s',
+                opacity: favoritesLoading ? 0.7 : 1
+              }}
+              onMouseEnter={(e) => {
+                if (!favoritesLoading) {
+                  e.currentTarget.style.transform = 'translateY(-2px)';
+                  e.currentTarget.style.boxShadow = '0 4px 8px rgba(0,0,0,0.2)';
+                }
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = 'none';
               }}
             >
-              Добавить в желаемое
+            <span style={{ fontSize: '20px' }}>
+                {favoritesLoading ? '...' : (isProductFavorite ? '❤️' : '🤍')}
+              </span>
+              {favoritesLoading 
+                ? 'Загрузка' 
+                : (isProductFavorite ? 'В желаемом' : 'Добавить в желаемое')
+              }
             </button>
 
             {/* Дополнительная информация */}

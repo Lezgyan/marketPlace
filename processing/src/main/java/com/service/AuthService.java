@@ -11,6 +11,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.util.Optional;
 import java.util.Set;
 
 @Service
@@ -43,6 +44,10 @@ public class AuthService {
         u.setEnabled(true);
         u.setRoles(Set.of("ROLE_USER"));
         userDao.save(u);
+    }
+
+    public Optional<User> getUserInfo(Long userId){
+        return userDao.getInfo(userId);
     }
 
     public String login(LoginRequest request) {

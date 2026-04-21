@@ -6,11 +6,14 @@ import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
 
 import java.sql.ResultSet;
+import lombok.extern.slf4j.Slf4j;
 import java.sql.SQLException;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.ArrayList;
+
 
 @Repository
 public class UserDao {
@@ -64,6 +67,17 @@ public class UserDao {
                 );
             }
         }
+    }
+
+    public Optional<User> getInfo(Long userId) {
+        String sql = "select u.id, u.username, u.password, u.email, u.enabled " +
+                "from users u where u.id = ?";
+
+        List<User> users = jdbc.query(sql, new UserRowMapper(), userId);
+        if (users.isEmpty()) return Optional.empty();
+        User user = users.get(0);
+        user.setRoles(getRoles(user.getId()));
+        return Optional.of(user);
     }
 
     private Set<String> getRoles(Long userId) {

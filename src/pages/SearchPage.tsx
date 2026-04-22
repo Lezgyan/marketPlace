@@ -1,358 +1,8 @@
 import React, { useState, useEffect} from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate,useLocation, Link } from 'react-router-dom';
 import { ProductCardProps, Product } from './Product.tsx';
-
-// Тип для динамического фильтра
-interface DynamicFilter {
-  key: string;           // Например: "Вес", "Стабилизация", "Цвет"
-  label: string;         // Отображаемое имя
-  type: 'checkbox' | 'radio';
-  options: string[];     // Уникальные значения из товаров
-}
-
-const useProductSearch = () => {
-  const [products, setProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(false);
-  
-  // Сохранение выбранных фильтров
-  const saveSelectedFilters = (selected: Record<string, any>) => {
-    localStorage.setItem('selected_filters', JSON.stringify(selected));
-  };
-
-  const loadSelectedFilters = (): Record<string, any> => {
-    const saved = localStorage.getItem('selected_filters');
-    return saved ? JSON.parse(saved) : {};
-  };
-
-  const searchProducts = async (
-    query: string, 
-    numberOfPage: number = 10, 
-    priceFrom: number = 0, 
-    priceTo: number = 100000, 
-    selectedFilters: Record<string, any> = {}
-  ) => {
-    setLoading(true);
-
-    const cleanPayload = () => {
-      const cleaned: Record<string, any> = {};
-    
-      Object.entries(selectedFilters).forEach(([key, value]) => {
-      // Пропускаем null и undefined
-      if (value === null || value === undefined) {
-        return;
-      }
-      
-      // Пропускаем пустые массивы
-      if (Array.isArray(value) && value.length === 0) {
-        return;
-      }
-      
-      // Пропускаем пустые строки
-      if (typeof value === 'string' && value.trim() === '') {
-        return;
-      }
-    // Для объектов (например, диапазон цены) проверяем, что хоть одно значение не пустое
-      if (typeof value === 'object' && !Array.isArray(value)) {
-        const hasValidValue = Object.values(value).some(v => v !== null && v !== undefined && v !== '');
-        if (!hasValidValue) {
-          return;
-        }
-        // Очищаем внутренние пустые значения объекта
-        const cleanedObject: Record<string, any> = {};
-        Object.entries(value).forEach(([objKey, objValue]) => {
-          if (objValue !== null && objValue !== undefined && objValue !== '') {
-            cleanedObject[objKey] = objValue;
-          }
-        });
-        if (Object.keys(cleanedObject).length > 0) {
-          cleaned[key] = cleanedObject;
-        }
-        return;
-      }
-      
-      // Все остальные валидные значения добавляем
-      cleaned[key] = value;
-    });
-    
-    return cleaned;
-  };
-  
-  const finalPayload = cleanPayload();
-
-    try {
-      const response = await fetch('http://localhost:8080/products/search', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ 
-          query, 
-          numberOfPage, 
-          priceFrom, 
-          priceTo, 
-          payload: finalPayload,
-        })
-      });
-      
-      const data = await response.json();
-      
-      // Извлекаем товары (поддержка разных форматов ответа)
-      let productsData: Product[] = [];
-      if (data.items && Array.isArray(data.items)) {
-        productsData = data.items;
-      } else if (Array.isArray(data)) {
-        productsData = data;
-      } else if (data.products && Array.isArray(data.products)) {
-        productsData = data.products;
-      }
-      
-      setProducts(productsData);
-      
-    } catch (error) {
-      console.error('Search error:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-  
-  return { 
-    products, 
-    searchProducts, 
-    loading,
-    saveSelectedFilters,
-    loadSelectedFilters
-  };
-};
-
-// Хук для извлечения динамических фильтров из товаров
-const useDynamicFilters = (products: Product[]) => {
-  const [filters, setFilters] = useState<DynamicFilter[]>([]);
-  
-  useEffect(() => {
-    // Собираем все динамические характеристики из всех товаров
-    const dynamicFieldsMap = new Map<string, Set<string>>();
-    
-    products.forEach(product => {
-      const dataRow = product.dataRow;
-      
-      // Перебираем все ключи в dataRow
-      Object.entries(dataRow).forEach(([key, value]) => {
-        // Исключаем стандартные поля, которые не нужны для фильтрации
-        const excludedKeys = ['id', 'url', 'name', 'tags', 'text', 'price', 'currency', 'fetched_at', 'picture_urls'];
-        
-        if (!excludedKeys.includes(key) && value && typeof value === 'string' && value.trim() !== '') {
-          if (!dynamicFieldsMap.has(key)) {
-            dynamicFieldsMap.set(key, new Set());
-          }
-          dynamicFieldsMap.get(key)!.add(value);
-        }
-      });
-    });
-    
-    // Преобразуем в массив фильтров
-    const newFilters: DynamicFilter[] = Array.from(dynamicFieldsMap.entries()).map(([key, values]) => {
-      const options = Array.from(values).sort();
-      
-      // Определяем тип: если опций мало (до 5) - radio, иначе checkbox
-      const type = options.length <= 5 ? 'radio' : 'checkbox';
-      
-      // Создаём понятный label
-      let label = key;
-      const labelMap: Record<string, string> = {
-        'Вес': 'Вес (г)',
-        'Стабилизация': 'Стабилизация',
-        'Цвет': 'Цвет',
-        'Размер': 'Размер',
-        'Материал': 'Материал',
-        'Бренд': 'Бренд'
-      };
-      label = labelMap[key] || key;
-      
-      return { key, label, type, options };
-    });
-    
-    setFilters(newFilters);
-    
-    // Сохраняем структуру фильтров в localStorage для кэширования
-    if (newFilters.length > 0) {
-      localStorage.setItem('dynamic_filters_structure', JSON.stringify(newFilters));
-    }
-    
-  }, [products]);
-  
-  // Загружаем сохранённую структуру фильтров, если товаров пока нет
-  const getCachedFilters = (): DynamicFilter[] => {
-    const cached = localStorage.getItem('dynamic_filters_structure');
-    return cached ? JSON.parse(cached) : [];
-  };
-  
-  return { filters, cachedFilters: getCachedFilters() };
-};
-
-// Компонент панели динамических фильтров
-const DynamicFilterPanel: React.FC<{
-  filters: DynamicFilter[];
-  selectedFilters: Record<string, any>;
-  onFilterChange: (key: string, value: any) => void;
-  productCount: number;
-}> = ({ filters, selectedFilters, onFilterChange, productCount }) => {
-  const [expandedFilters, setExpandedFilters] = useState<Record<string, boolean>>({});
-
-  const toggleFilter = (key: string) => {
-    setExpandedFilters(prev => ({ ...prev, [key]: !prev[key] }));
-  };
-
-  if (filters.length === 0) {
-    return (
-      <div style={{ 
-        width: '280px', 
-        padding: '20px', 
-        backgroundColor: '#f9f9f9', 
-        borderRadius: '8px',
-        textAlign: 'center',
-        color: '#999'
-      }}>
-        <p>Нет доступных фильтров</p>
-        <p style={{ fontSize: '12px', marginTop: '10px' }}>
-          Фильтры появятся после загрузки товаров
-        </p>
-      </div>
-    );
-  }
-
-  return (
-    <div style={{ 
-      width: '280px', 
-      padding: '20px',
-      backgroundColor: '#f9f9f9',
-      borderRadius: '8px',
-      position: 'sticky',
-      top: '20px',
-      height: 'fit-content',
-      maxHeight: 'calc(100vh - 40px)',
-      overflowY: 'auto'
-    }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-        <h3 style={{ margin: 0 }}>Фильтры</h3>
-        <span style={{ fontSize: '12px', color: '#666' }}>
-          {productCount} товаров
-        </span>
-      </div>
-      
-      {filters.map(filter => {
-        const selectedValue = selectedFilters[filter.key];
-        const hasSelection = filter.type === 'checkbox' 
-          ? (selectedValue?.length > 0)
-          : (selectedValue !== null && selectedValue !== undefined);
-        
-        return (
-          <div key={filter.key} style={{ marginBottom: '15px', borderBottom: '1px solid #eee', paddingBottom: '10px' }}>
-            <div 
-              onClick={() => toggleFilter(filter.key)}
-              style={{ 
-                cursor: 'pointer', 
-                display: 'flex', 
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                fontWeight: hasSelection ? 'bold' : 'normal',
-                color: hasSelection ? '#2652e4' : 'inherit'
-              }}
-            >
-              <span>{filter.label}</span>
-              <div>
-                {hasSelection && (
-                  <span 
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onFilterChange(filter.key, filter.type === 'checkbox' ? [] : null);
-                    }}
-                    style={{ 
-                      fontSize: '12px', 
-                      color: '#ff4444', 
-                      marginRight: '8px',
-                      cursor: 'pointer'
-                    }}
-                  >
-                    ✕
-                  </span>
-                )}
-                <span>{expandedFilters[filter.key] !== false ? '▼' : '▶'}</span>
-              </div>
-            </div>
-            
-            {expandedFilters[filter.key] !== false && (
-              <div style={{ marginLeft: '10px', marginTop: '10px' }}>
-                {filter.type === 'checkbox' && (
-                  <div>
-                    {filter.options.map(option => (
-                      <label key={option} style={{ display: 'block', marginBottom: '8px', cursor: 'pointer' }}>
-                        <input
-                          type="checkbox"
-                          checked={selectedValue?.includes(option) || false}
-                          onChange={(e) => {
-                            const current = selectedValue || [];
-                            let newValue;
-                            if (e.target.checked) {
-                              newValue = [...current, option];
-                            } else {
-                              newValue = current.filter((v: string) => v !== option);
-                            }
-                            onFilterChange(filter.key, newValue);
-                          }}
-                          style={{ marginRight: '8px', cursor: 'pointer' }}
-                        />
-                        <span style={{ fontSize: '14px' }}>{option}</span>
-                      </label>
-                    ))}
-                  </div>
-                )}
-                
-                {filter.type === 'radio' && (
-                  <div>
-                    {filter.options.map(option => (
-                      <label key={option} style={{ display: 'block', marginBottom: '8px', cursor: 'pointer' }}>
-                        <input
-                          type="radio"
-                          name={filter.key}
-                          checked={selectedValue === option}
-                          onChange={() => onFilterChange(filter.key, option)}
-                          style={{ marginRight: '8px', cursor: 'pointer' }}
-                        />
-                        <span style={{ fontSize: '14px' }}>{option}</span>
-                      </label>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-        );
-      })}
-      
-      <button
-        onClick={() => {
-          filters.forEach(filter => {
-            onFilterChange(filter.key, filter.type === 'checkbox' ? [] : null);
-          });
-        }}
-        style={{
-          width: '100%',
-          padding: '10px',
-          backgroundColor: '#f0f0f0',
-          border: '1px solid #ddd',
-          borderRadius: '4px',
-          cursor: 'pointer',
-          marginTop: '20px',
-          transition: 'background-color 0.2s'
-        }}
-        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#e0e0e0'}
-        onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#f0f0f0'}
-      >
-        Сбросить все фильтры
-      </button>
-    </div>
-  );
-};
+import {useDynamicFilters, DynamicFilterPanel} from './DynamicFilter.tsx'
+import { useProductSearch } from '../services/SearchService.tsx';
 
 const ProductCard: React.FC<ProductCardProps> = ({ product, onProductClick }) => {
   const [imageError, setImageError] = useState(false);
@@ -419,7 +69,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onProductClick }) =>
             color: '#999',
             fontSize: '14px'
           }}>
-            📷 Нет фото
+            (X o X)
           </div>
         )}
       </div>
@@ -475,15 +125,20 @@ const SearchPage: React.FC = () => {
   const [selectedFilters, setSelectedFilters] = useState<Record<string, any>>({});
   const [priceFrom, setPriceFrom] = useState<number>(0);
   const [priceTo, setPriceTo] = useState<number>(100000);
-  
+  const location = useLocation();
   const navigate = useNavigate();
   const { products, searchProducts, loading, saveSelectedFilters, loadSelectedFilters } = useProductSearch();
   
   // Получаем динамические фильтры из товаров
   const { filters: dynamicFilters } = useDynamicFilters(products);
 
-  // Загрузка сохранённых фильтров при монтировании
   useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const queryParam = params.get('q');
+    
+    if (queryParam) {
+      setSearchTerm(queryParam);
+    }
     const token = localStorage.getItem('authToken');
     const savedUsername = localStorage.getItem('username');
     
@@ -491,7 +146,6 @@ const SearchPage: React.FC = () => {
       setUsername(savedUsername);
     }
     
-    // Восстанавливаем выбранные фильтры
     const savedFilters = loadSelectedFilters();
     setSelectedFilters(savedFilters);
     
@@ -501,7 +155,6 @@ const SearchPage: React.FC = () => {
       setSearchTerm(savedSearchTerm);
     }
     
-    // Восстанавливаем ценовой диапазон
     const savedPriceFrom = localStorage.getItem('price_from');
     const savedPriceTo = localStorage.getItem('price_to');
     if (savedPriceFrom) setPriceFrom(parseInt(savedPriceFrom));
@@ -509,7 +162,6 @@ const SearchPage: React.FC = () => {
     
   }, []);
 
-  // Выполняем поиск при изменении параметров
   useEffect(() => {
     const timeoutId = setTimeout(() => {
       searchProducts(searchTerm, 0, priceFrom, priceTo, selectedFilters);
@@ -566,50 +218,97 @@ const SearchPage: React.FC = () => {
 
   return (
     <div style={{ padding: '20px', maxWidth: '1400px', margin: '0 auto' }}>
-      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '20px' }}>
-        {username ? (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <button 
-              onClick={handleUserClick}
-              style={{ 
-                padding: '8px 16px',
-                backgroundColor: '#f0f0f0',
-                borderRadius: '4px',
-                border: '1px solid #ddd',
-                cursor: 'pointer'
+      <header style={{
+        backgroundColor: 'white',
+        borderBottom: '1px solid #e0e0e0',
+        padding: '16px 32px',
+        position: 'sticky',
+        top: 0,
+        zIndex: 100,
+        boxShadow: '0 2px 8px rgba(0,0,0,0.05)'
+      }}>
+        <div style={{
+          maxWidth: '1400px',
+          margin: '0 auto',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          flexWrap: 'wrap',
+          gap: '16px'
+        }}>
+          {/* Логотип и название */}
+          <Link to="/" style={{ textDecoration: 'none' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <div style={{
+                width: '40px',
+                height: '40px',
+                backgroundColor: '#2c5aa0',
+                borderRadius: '10px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '24px'
               }}>
-              👤 {username}
-            </button>
-            <button 
-              onClick={handleLogout}
-              style={{
-                padding: '8px 16px',
-                backgroundColor: '#ff4444',
-                color: 'white',
-                border: 'none',
-                borderRadius: '4px',
-                cursor: 'pointer'
-              }}
-            >
-              Выйти
-            </button>
+                🛒
+              </div>
+              <div>
+                <h1 style={{ margin: 0, fontSize: '20px', color: '#2c5aa0' }}>MrktAgg()</h1>
+                <p style={{ margin: 0, fontSize: '12px', color: '#666' }}>агрегатор маркетплейсов</p>
+              </div>
+            </div>
+          </Link>
+
+          {/* Кнопка перехода на страницу поиска и профиль */}
+          <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+            {username ? (
+              <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                <Link to="/user">
+                  <span style={{
+                    padding: '8px 16px',
+                    backgroundColor: '#f0f0f0',
+                    borderRadius: '8px',
+                    border: '1px solid #ddd',
+                    cursor: 'pointer',
+                    fontSize: '14px',
+                    display: 'inline-block'
+                  }}>
+                    👤 {username}
+                  </span>
+                </Link>
+                <button
+                  onClick={handleLogout}
+                  style={{
+                    padding: '8px 16px',
+                    backgroundColor: '#ff4444',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    fontSize: '14px'
+                  }}
+                >
+                  Выйти
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={() => navigate('/login')}
+                style={{
+                  padding: '8px 16px',
+                  backgroundColor: '#2c5aa0',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '8px',
+                  cursor: 'pointer',
+                  fontSize: '14px'
+                }}
+              >
+                Войти
+              </button>
+            )}
           </div>
-        ) : (
-          <button 
-            onClick={handleLoginClick}
-            style={{
-              padding: '8px 16px',
-              backgroundColor: '#2652e4',
-              color: 'white',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: 'pointer'
-            }}
-          >
-            Вход
-          </button>
-        )}
-      </div>
+        </div>
+      </header>
 
       <h1 style={{ textAlign: 'center', marginBottom: '30px' }}>Поиск товаров</h1>
       
@@ -678,7 +377,7 @@ const SearchPage: React.FC = () => {
             </div>
           </div>
 
-          {/* Активные фильтры (чипсы) */}
+          {/* Активные фильтры */}
           {Object.entries(selectedFilters).filter(([_, value]) => {
             if (Array.isArray(value)) return value.length > 0;
             return value !== null && value !== undefined && value !== '';

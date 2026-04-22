@@ -6,6 +6,7 @@ import './App.css';
 import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import SearchPage from './pages/SearchPage';
 import ProductPage from './pages/ProductPage';
+import StartPage from './pages/StartPage';
 
 const AppContent: React.FC = () => {
   const [prefillUsername, setPrefillUsername] = useState<string>(''); 
@@ -26,8 +27,9 @@ const AppContent: React.FC = () => {
 
   return (
     <Routes>
+      <Route path="/" element={<StartPage />} />
       <Route path="/user" element={<UserPage />} />
-      <Route path="/" element={<SearchPage />} />
+      <Route path="/search" element={<SearchPage />} />
       <Route path="/product/:id" element={<ProductPage />} />
       <Route 
         path="/login" 

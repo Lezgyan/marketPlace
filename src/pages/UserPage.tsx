@@ -12,11 +12,10 @@ const UserPage: React.FC = () => {
     type: 'success'
   });
   const navigate = useNavigate();
-    const { 
+  const { 
     favorites, 
     loading, 
     removeFromFavorites, 
-    loadFavorites
   } = useFavorites();
   
   useEffect(() => {
@@ -73,7 +72,7 @@ const UserPage: React.FC = () => {
               padding: '8px 16px',
               backgroundColor: '#f0f0f0',
               border: '1px solid #ddd',
-              borderRadius: '4px',
+              borderRadius: '6px',
               cursor: 'pointer'
             }}>
               На главную
@@ -86,7 +85,7 @@ const UserPage: React.FC = () => {
               backgroundColor: '#ff4444',
               color: 'white',
               border: 'none',
-              borderRadius: '4px',
+              borderRadius: '6px',
               cursor: 'pointer'
             }}>
             Выйти

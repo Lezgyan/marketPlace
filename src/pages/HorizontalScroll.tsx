@@ -63,8 +63,7 @@ const HorizontalScroll: React.FC<HorizontalScrollProps> = ({ products, title, lo
           borderRadius: '12px',
           color: '#999'
         }}>
-          <p style={{ fontSize: '18px' }}>Добавьте товары в избранное, чтобы получать рекомендации</p>
-          <p style={{ fontSize: '14px', marginTop: '8px' }}>Чем больше товаров вы добавите, тем точнее будут рекомендации</p>
+          <p style={{ fontSize: '14px', marginTop: '8px' }}> (￣︶￣) Чем больше товаров вы добавите, тем точнее будут рекомендации</p>
         </div>
       </div>
     );

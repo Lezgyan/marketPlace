@@ -13,7 +13,7 @@ export const useRecommendations = () => {
   const loadRecommendations = async (limit: number = 20) => {
     const token = localStorage.getItem('authToken');
     //const userId = localStorage.getItem('userId');
-    const userId = '1';
+    const userId = '2';
     if (!token || !userId) {
       console.log('No token or userId, cannot load recommendations');
       return;

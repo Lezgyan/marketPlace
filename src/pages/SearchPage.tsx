@@ -6,12 +6,56 @@ import { useProductSearch } from '../services/SearchService.tsx';
 
 const ProductCard: React.FC<ProductCardProps> = ({ product, onProductClick }) => {
   const [imageError, setImageError] = useState(false);
+  const [showTooltip, setShowTooltip] = useState(false);
+  const [logoError, setLogoError] = useState(false);
 
   const handleClick = () => {
     onProductClick(product);
   };
 
+  const detectMarketplace = (url: string) => {
+    const urlLower = url.toLowerCase();
+    
+    if (urlLower.includes('market.yandex') || urlLower.includes('yandex.market') || urlLower.includes('beru.ru')) {
+      return {
+          name: 'Яндекс Маркет',
+          logoUrl: 'https://www.ph4.ru/DL/LOGO_ICON/y/ya_market_.gif',
+          fallbackIcon: 'Я',
+          bgColor: '#aacc00',
+          color: '#000000'
+        };
+    }
+    if (urlLower.includes('wildberries') || urlLower.includes('wildberries.ru') || urlLower.includes('wb.ru')) {
+      return {
+          name: 'Wildberries',
+          logoUrl: 'https://cdn.worldvectorlogo.com/logos/wildberries-1.svg',
+          fallbackIcon: 'WB',
+          bgColor: '#f3e5f5',
+          color: '#9b59b6'
+        };
+    }
+    if (urlLower.includes('ozon') || urlLower.includes('ozon.ru') || urlLower.includes('ozon.ru')) {
+      return {
+          name: 'Ozon',
+          logoUrl: 'https://cdn.worldvectorlogo.com/logos/ozon-1.svg',
+          fallbackIcon: 'OZ',
+          bgColor: '#e3f2fd',
+          color: '#005b9f'
+        };
+    }
+    
+    return {
+          name: 'Другой магазин',
+          logoUrl: '',
+          fallbackIcon: '🛒',
+          bgColor: '#f5f5f5',
+          color: '#666'
+        };
+  };
+
   const productData = product.dataRow;
+  const marketplaceUrl = productData.url || '';
+  const marketplaceStyle = detectMarketplace(marketplaceUrl);
 
   return (
     <div 
@@ -38,6 +82,82 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onProductClick }) =>
         e.currentTarget.style.boxShadow = '0 2px 4px rgba(0,0,0,0.1)';
       }}
     >
+
+    {/* Иконка маркетплейса */}
+      {marketplaceStyle.name !== 'Другой магазин' && (
+        <div
+          onMouseEnter={() => setShowTooltip(true)}
+          onMouseLeave={() => setShowTooltip(false)}
+          style={{
+            position: 'relative',
+            top: '4px',
+            left: '-100px',
+            width: '32px',
+            height: '32px',
+            borderRadius: '8px',
+            backgroundColor: 'white',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            border: `1px solid ${marketplaceStyle.color}`,
+            zIndex: 10,
+            cursor: 'help',
+            padding: '4px',
+            boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+          }}
+        >
+          {!logoError ? (
+            <img
+              src={marketplaceStyle.logoUrl}
+              alt={marketplaceStyle.name}
+              style={{
+                width: '100%',
+                height: '100%',
+                objectFit: 'contain'
+              }}
+              onError={() => setLogoError(true)}
+            />
+          ) : (
+            <span style={{ fontSize: '14px', fontWeight: 'bold', color: marketplaceStyle.color }}>
+              {marketplaceStyle.fallbackIcon}
+            </span>
+          )}
+          
+          {/* Тултип с названием маркетплейса */}
+          {showTooltip && (
+            <div
+              style={{
+                position: 'absolute',
+                top: '36px',
+                left: '0',
+                backgroundColor: '#333',
+                color: 'white',
+                padding: '4px 8px',
+                borderRadius: '4px',
+                fontSize: '12px',
+                whiteSpace: 'nowrap',
+                zIndex: 20,
+                boxShadow: '0 2px 8px rgba(0,0,0,0.2)'
+              }}
+            >
+              {marketplaceStyle.name}
+          <div
+                style={{
+                  position: 'absolute',
+                  top: '-6px',
+                  left: '10px',
+                  width: '0',
+                  height: '0',
+                  borderLeft: '6px solid transparent',
+                  borderRight: '6px solid transparent',
+                  borderBottom: '6px solid #333'
+                }}
+              />
+            </div>
+          )}
+        </div>
+      )}
+
       <div style={{
         width: '150px',
         height: '150px',
@@ -45,6 +165,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onProductClick }) =>
         alignItems: 'center',
         justifyContent: 'center',
         marginBottom: '12px',
+        marginTop: '0px', 
         overflow: 'hidden'
       }}>
         {!imageError && productData.picture_urls && productData.picture_urls[0] ? (
@@ -476,6 +597,7 @@ const SearchPage: React.FC = () => {
                   key={product.id} 
                   product={product} 
                   onProductClick={handleProductClick}
+                  
                 />
               ))
             ) : (

@@ -29,7 +29,7 @@ export const useFavorites = () => {
       }
     }
     
-    const savedUserId = "1";
+    const savedUserId = "2";
     if (savedUserId) {
       return parseInt(savedUserId);
     }

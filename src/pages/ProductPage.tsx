@@ -159,11 +159,11 @@ const ProductPage: React.FC = () => {
       <button 
         onClick={() => navigate(-1)}
         style={{
-          padding: '12px 16px',
+          padding: '12px 28px',
           marginBottom: '20px',
           backgroundColor: '#f5f5f5',
           border: '1px solid #ddd',
-          borderRadius: '4px',
+          borderRadius: '6px',
           cursor: 'pointer'
         }}
       >
